@@ -28,7 +28,7 @@ class gracz:
         self.obrot = 0 #obrot gracza od 0 do 3 
         self.hp = 25
         self.maxhp = 25
-        self.posiadane_bronie = ["railgun_barrel","normal_barrel"] #lista posiadanych barreli przez gracza
+        self.posiadane_bronie = ["railgun_barrel","normal_barrel","prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"] #lista posiadanych barreli przez gracza
         self.aktualna_bron = "railgun_barrel" #jaka jest aktualna bron zalozona przez gracza
         self.animacja = 0 #0 to koniec/brak animacji 16 to poczatek
         self.money = 50 #pieniądze używane do kupowania w sklepie
@@ -738,8 +738,8 @@ def Rysowanie_Broni(nazwa,x,y,obrot):
 def strzal(poczatekx,poczateky,kierunek,nazwa):
     targets = []
     match nazwa: 
-        case "railgun_barrel": #zasieg 3 na wprzod , 3 obr , wszystkie cele
-            for i in range(3):
+        case "railgun_barrel": #zasieg 4 na wprzod , 4 obr , wszystkie cele
+            for i in range(4):
                 match kierunek:
                     case 0:
                         targets.append([poczatekx,poczateky-i-1])
@@ -752,13 +752,13 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
     
             for i in targets:
                 if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
-                    obiekt_gracz.zadaj_obrazenia(3)
+                    obiekt_gracz.zadaj_obrazenia(4)
                 for obj in przeciwnicy_arr:
                     if obj.x == i[0] and obj.y ==i[1]:
-                        obj.zadaj_obrazenia(3)
+                        obj.zadaj_obrazenia(4)
                 for obj in przeszkody_arr:
                     if obj.x == i[0] and obj.y == i[1]:
-                        obj.zadaj_obrazenia(3)
+                        obj.zadaj_obrazenia(4)
         case "normal_barrel": #zasieg 3 w przod , 5 obr, pierwszy cel
             temp = True #zmienna sie zmienia na False jak trafi cel
             for i in range(3):
@@ -784,7 +784,7 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                         if obj.x == i[0] and obj.y == i[1]:
                             obj.zadaj_obrazenia(5)
                             temp = False
-        case "prisma_barrel": #zasieg 5 na wprzod , 2 obr , wszystkie cele
+        case "prisma_barrel": #zasieg 5 na wprzod , 3 obr , wszystkie cele
             for i in range(5):
                 match kierunek:
                     case 0:
@@ -798,13 +798,191 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
     
             for i in targets:
                 if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
-                    obiekt_gracz.zadaj_obrazenia(2)
+                    obiekt_gracz.zadaj_obrazenia(3)
                 for obj in przeciwnicy_arr:
                     if obj.x == i[0] and obj.y ==i[1]:
-                        obj.zadaj_obrazenia(2)
+                        obj.zadaj_obrazenia(3)
                 for obj in przeszkody_arr:
                     if obj.x == i[0] and obj.y == i[1]:
-                        obj.zadaj_obrazenia(2)
+                        obj.zadaj_obrazenia(3)
+        case "bubble_barrel": #zasieg 5 na wprzod , 2 obr, pierwszy cel
+            temp = True
+            for i in range(5):
+                match kierunek:
+                    case 0:
+                        targets.append([poczatekx,poczateky-i-1])
+                    case 1:
+                        targets.append([poczatekx+i+1,poczateky])
+                    case 2:
+                        targets.append([poczatekx,poczateky+i+1])
+                    case 3:
+                        targets.append([poczatekx-i-1,poczateky])
+            for i in targets:
+                if temp == True:
+                    if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
+                        obiekt_gracz.zadaj_obrazenia(2)
+                        temp = False
+                    for obj in przeciwnicy_arr:
+                        if obj.x == i[0] and obj.y ==i[1]:
+                            obj.zadaj_obrazenia(2)
+                            temp = False
+                    for obj in przeszkody_arr:
+                        if obj.x == i[0] and obj.y == i[1]:
+                            obj.zadaj_obrazenia(2)
+                            temp = False
+        case "cow_barrel": #zasieg 3 na wprzod , 7 obr, pierwszy cel
+            temp = True
+            for i in range(3):
+                match kierunek:
+                    case 0:
+                        targets.append([poczatekx,poczateky-i-1])
+                    case 1:
+                        targets.append([poczatekx+i+1,poczateky])
+                    case 2:
+                        targets.append([poczatekx,poczateky+i+1])
+                    case 3:
+                        targets.append([poczatekx-i-1,poczateky])
+            for i in targets:
+                if temp == True:
+                    if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
+                        obiekt_gracz.zadaj_obrazenia(7)
+                        temp = False
+                    for obj in przeciwnicy_arr:
+                        if obj.x == i[0] and obj.y ==i[1]:
+                            obj.zadaj_obrazenia(7)
+                            temp = False
+                    for obj in przeszkody_arr:
+                        if obj.x == i[0] and obj.y == i[1]:
+                            obj.zadaj_obrazenia(7)
+                            temp = False
+        case "shotgun_barrel": #zasieg prostokat 3x2 na wprzod, 5 obr, wszystkie cele
+            for i in range(2):
+                match kierunek:
+                    case 0:
+                        targets.append([poczatekx,poczateky-i-1])
+                        targets.append([poczatekx+1,poczateky-i-1])
+                        targets.append([poczatekx-2,poczateky-i-1])
+                    case 1:
+                        targets.append([poczatekx+i+1,poczateky])
+                        targets.append([poczatekx+i+1,poczateky+1])
+                        targets.append([poczatekx+i+1,poczateky-1])
+                    case 2:
+                        targets.append([poczatekx,poczateky+i+1])
+                        targets.append([poczatekx+1,poczateky+i+1])
+                        targets.append([poczatekx-1,poczateky+i+1])
+                    case 3:
+                        targets.append([poczatekx-i-1,poczateky])
+                        targets.append([poczatekx-i-1,poczateky+1])
+                        targets.append([poczatekx-i-1,poczateky-1])
+                for i in targets:
+                    if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
+                        obiekt_gracz.zadaj_obrazenia(5)
+                    for obj in przeciwnicy_arr:
+                        if obj.x == i[0] and obj.y ==i[1]:
+                            obj.zadaj_obrazenia(5)
+                    for obj in przeszkody_arr:
+                        if obj.x == i[0] and obj.y == i[1]:
+                            obj.zadaj_obrazenia(5)
+        case "chain_barrel": #zasieg 4 na wprzod , 2 obr, pierwszy cel
+            temp = True
+            for i in range(4):
+                match kierunek:
+                    case 0:
+                        targets.append([poczatekx,poczateky-i-1])
+                    case 1:
+                        targets.append([poczatekx+i+1,poczateky])
+                    case 2:
+                        targets.append([poczatekx,poczateky+i+1])
+                    case 3:
+                        targets.append([poczatekx-i-1,poczateky])
+            for i in targets:
+                if temp == True:
+                    if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
+                        obiekt_gracz.zadaj_obrazenia(2)
+                        temp = False
+                    for obj in przeciwnicy_arr:
+                        if obj.x == i[0] and obj.y ==i[1]:
+                            obj.zadaj_obrazenia(2)
+                            temp = False
+                    for obj in przeszkody_arr:
+                        if obj.x == i[0] and obj.y == i[1]:
+                            obj.zadaj_obrazenia(2)
+                            temp = False
+        case "sword_barrel": #zaieg 1 na wprzod, 15 obr, pierwszy cel
+            temp = True
+            match kierunek:
+                case 0:
+                    targets.append([poczatekx,poczateky-1])
+                case 1:
+                    targets.append([poczatekx+1,poczateky])
+                case 2:
+                    targets.append([poczatekx,poczateky+1])
+                case 3:
+                    targets.append([poczatekx-1,poczateky])
+            for i in targets:
+                if temp == True:
+                    if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
+                        obiekt_gracz.zadaj_obrazenia(15)
+                        temp = False
+                    for obj in przeciwnicy_arr:
+                        if obj.x == i[0] and obj.y ==i[1]:
+                            obj.zadaj_obrazenia(15)
+                            temp = False
+                    for obj in przeszkody_arr:
+                        if obj.x == i[0] and obj.y == i[1]:
+                            obj.zadaj_obrazenia(15)
+                            temp = False
+        case "lego_barrel": #zaieg 8 na wprzod, 3 obr, pierwszy cel
+            temp = True
+            for i in range(8):
+                match kierunek:
+                    case 0:
+                        targets.append([poczatekx,poczateky-i-1])
+                    case 1:
+                        targets.append([poczatekx+i+1,poczateky])
+                    case 2:
+                        targets.append([poczatekx,poczateky+i+1])
+                    case 3:
+                        targets.append([poczatekx-i-1,poczateky])
+            for i in targets:
+                if temp == True:
+                    if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
+                        obiekt_gracz.zadaj_obrazenia(3)
+                        temp = False
+                    for obj in przeciwnicy_arr:
+                        if obj.x == i[0] and obj.y ==i[1]:
+                            obj.zadaj_obrazenia(3)
+                            temp = False
+                    for obj in przeszkody_arr:
+                        if obj.x == i[0] and obj.y == i[1]:
+                            obj.zadaj_obrazenia(3)
+                            temp = False
+        case "golden_barrel": #zaieg 4 na wprzod, 8 obr, pierwszy cel
+            temp = True
+            for i in range(4):
+                match kierunek:
+                    case 0:
+                        targets.append([poczatekx,poczateky-i-1])
+                    case 1:
+                        targets.append([poczatekx+i+1,poczateky])
+                    case 2:
+                        targets.append([poczatekx,poczateky+i+1])
+                    case 3:
+                        targets.append([poczatekx-i-1,poczateky])
+            for i in targets:
+                if temp == True:
+                    if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
+                        obiekt_gracz.zadaj_obrazenia(8)
+                        temp = False
+                    for obj in przeciwnicy_arr:
+                        if obj.x == i[0] and obj.y ==i[1]:
+                            obj.zadaj_obrazenia(8)
+                            temp = False
+                    for obj in przeszkody_arr:
+                        if obj.x == i[0] and obj.y == i[1]:
+                            obj.zadaj_obrazenia(8)
+                            temp = False
+            
 
 def nowy_poziom():
     global poziom,obiekt_gracz,przeciwnicy_arr,przeciwnicy_arr,przeszkody_arr,level_shift_animation
