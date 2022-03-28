@@ -18,6 +18,7 @@ start_menu = True #zmienna ktora pozazuje czy gracz jest w menu startowym gdzie 
 poziom = 0 #poziom na jakim aktualnie jest gracz
 level_shift_animation = 0 #0 - brak animacii 90 - poczatek animacii (1.5 sek powinna trwac animacja)
 koszty_strzalu = {"railgun_barrel":3,"normal_barrel":3,"prisma_barrel":4,"bubble_barrel":2,"cow_barrel":3,"shotgun_barrel":6,"chain_barrel":1,"sword_barrel":5,"lego_barrel":3,"golden_barrel":6}
+koszty_gadzetow = {"sand_bag":1,"rocket_luncher":2,"sound_wave":1,"battery":0,"medkit":0}
 pr.init_audio_device()
 class gracz:
     def __init__(self,posx,posy):
@@ -29,7 +30,9 @@ class gracz:
         self.hp = 25
         self.maxhp = 25
         self.posiadane_bronie = ["railgun_barrel","normal_barrel","prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"] #lista posiadanych barreli przez gracza
+        self.posiadane_gadzety = ["sand_bag","rocket_luncher","sound_wave","battery","medkit"]
         self.aktualna_bron = "railgun_barrel" #jaka jest aktualna bron zalozona przez gracza
+        self.aktualny_gadzet = ""
         self.animacja = 0 #0 to koniec/brak animacji 16 to poczatek
         self.money = 50 #pieniądze używane do kupowania w sklepie
     def narysuj(self):
@@ -54,6 +57,7 @@ class gracz:
         else:
             pr.draw_texture_tiled(czolg,pr.Rectangle(0,0,64,64),pr.Rectangle(self.x*64+32,self.y*64+32,64,64),pr.Vector2(32,32),90*self.obrot,1,pr.WHITE)
             Rysowanie_Broni(self.aktualna_bron,self.x,self.y,self.obrot)
+            Rysowanie_Gadzetu(self.aktualny_gadzet,self.x,self.y,self.obrot)
         if (pr.get_mouse_x() > self.x*64 and pr.get_mouse_x() < (self.x+1)*64 and pr.get_mouse_y() > self.y*64 and pr.get_mouse_y() < (self.y+1)*64 and menu_eq == False):
                 pr.draw_text(str(self.hp),self.x*64,self.y*64,64,pr.YELLOW)
     def strzel(self):
@@ -67,28 +71,39 @@ class gracz:
             print("koniec gry")
         else:
             temp = Damage(self.x,self.y)
+    def uzycie_gadzetu(self):
+        if self.aktualny_gadzet in koszty_gadzetow:
+            if self.aktualnaenergia >= koszty_gadzetow[self.aktualny_gadzet]:
+                self.aktualnaenergia -=koszty_gadzetow[self.aktualny_gadzet]
+                Gadzet(self.aktualny_gadzet)
+        else:
+            pr.play_sound(ui_cancel_audio)
     
 
 
 class przeszkody:
-    def __init__(self,posx,posy):
+    def __init__(self,posx,posy,rodzaj):
         self.x=posx
         self.y=posy
-        self.hp = 10
-        temp = random.randint(0,2)
-        match temp:
+        match rodzaj:
             case 0:
+                self.hp = 10
                 self.sprite = budynek_tile1
             case 1:
+                self.hp = 7
                 self.sprite = budynek_tile2
             case 2:
+                self.hp = 4
                 self.sprite = budynek_tile3
+            case "sand_bag":
+                self.hp = 30
+                self.sprite = ui_sandbags_texture
     def narysuj(self):
         pr.draw_texture(self.sprite,self.x*64,self.y*64,pr.WHITE)
         if (pr.get_mouse_x() > self.x*64 and pr.get_mouse_x() < (self.x+1)*64 and pr.get_mouse_y() > self.y*64 and pr.get_mouse_y() < (self.y+1)*64 and menu_eq == False):
             pr.draw_text(str(self.hp),self.x*64,self.y*64,64,pr.YELLOW)
     def zadaj_obrazenia(self,obrazenia):
-        self.hp -= obrazenia
+        self.hp -= obrazenia 
         if (self.hp <=0):
             temp = Explosion(self.x,self.y)
             przeszkody_arr.remove(self)
@@ -403,11 +418,63 @@ shift_animation_sprite = pr.load_texture_from_image(temp)
 pr.unload_image(temp)
 
 
+temp = pr.load_image("sprite/ui_battery.png")
+pr.image_resize(temp,64,64)
+ui_battery_texture = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/ui_medkit.png")
+pr.image_resize(temp,64,64)
+ui_medkit_texture = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/ui_rocket_luncher.png")
+pr.image_resize(temp,64,64)
+ui_rocket_luncher_texture = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/ui_sandbags.png")
+pr.image_resize(temp,64,64)
+ui_sandbags_texture = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/ui_sound_wave.png")
+pr.image_resize(temp,64,64)
+ui_sound_wave_texture = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+
+temp = pr.load_image("sprite/battery_sprite.png")
+pr.image_resize(temp,64,64)
+battery_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/medkit_sprite.png")
+pr.image_resize(temp,64,64)
+medkit_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/rocket_luncher_sprite.png")
+pr.image_resize(temp,64,64)
+rocket_luncher_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/sand_bag_sprite.png")
+pr.image_resize(temp,64,64)
+sand_bag_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/sound_wave_sprite.png")
+pr.image_resize(temp,64,64)
+sound_wave_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+
 ui_cancel_audio = pr.load_sound("sounds/ui_cancel.wav")
 
 
 obiekt_gracz = gracz(-1,-1)
-przeszkody_arr = [przeszkody(-1,-1) for i in range(10)]
+przeszkody_arr = [przeszkody(-1,-1,random.randint(0,2)) for i in range(10)]
 przeciwnicy_arr = [przeciwnik(-1,-1) for i in range(1)]
 trawy_arr =[trawa(x,y) for x in range(15) for y in range(15)]
 smoke_arr = []
@@ -569,6 +636,69 @@ def RysowanieUi():
                 obiekt_gracz.aktualna_bron = "golden_barrel"
             else:
                 pr.play_sound(ui_cancel_audio)
+
+
+        pr.draw_text("Gadgets",350,200,64,pr.WHITE) #na oko jest po środku ;)
+        if "sand_bag" in obiekt_gracz.posiadane_gadzety:
+            pr.draw_rectangle(0,296,64,64,pr.WHITE)
+            pr.draw_texture_ex(ui_sandbags_texture,pr.Vector2(0,296),0,1,pr.WHITE)
+        else:
+            pr.draw_rectangle(0,296,64,64,pr.RED)
+            pr.draw_texture_ex(ui_sandbags_texture,pr.Vector2(0,296),0,1,pr.RED)
+        if pr.get_mouse_x() > 0 and pr.get_mouse_x()<64 and pr.get_mouse_y() > 296 and pr.get_mouse_y() < 360 and pr.is_mouse_button_pressed(0):
+            if "sand_bag" in obiekt_gracz.posiadane_gadzety:
+                obiekt_gracz.aktualny_gadzet = "sand_bag"
+            else:
+                pr.play_sound(ui_cancel_audio)
+
+        if "rocket_luncher" in obiekt_gracz.posiadane_gadzety:
+            pr.draw_rectangle(96,296,64,64,pr.WHITE)
+            pr.draw_texture_ex(ui_rocket_luncher_texture,pr.Vector2(96,296),0,1,pr.WHITE)
+        else:
+            pr.draw_rectangle(96,296,64,64,pr.RED)
+            pr.draw_texture_ex(ui_rocket_luncher_texture,pr.Vector2(96,296),0,1,pr.RED)
+        if pr.get_mouse_x() > 96 and pr.get_mouse_x()<160 and pr.get_mouse_y() > 296 and pr.get_mouse_y() < 360 and pr.is_mouse_button_pressed(0):
+            if "rocket_luncher" in obiekt_gracz.posiadane_gadzety:
+                obiekt_gracz.aktualny_gadzet = "rocket_luncher"
+            else:
+                pr.play_sound(ui_cancel_audio)
+
+        if "sound_wave" in obiekt_gracz.posiadane_gadzety:
+            pr.draw_rectangle(192,296,64,64,pr.WHITE)
+            pr.draw_texture_ex(ui_sound_wave_texture,pr.Vector2(192,296),0,1,pr.WHITE)
+        else:
+            pr.draw_rectangle(192,296,64,64,pr.RED)
+            pr.draw_texture_ex(ui_sound_wave_texture,pr.Vector2(192,296),0,1,pr.RED)
+        if pr.get_mouse_x() > 192 and pr.get_mouse_x()<256 and pr.get_mouse_y() > 296 and pr.get_mouse_y() < 360 and pr.is_mouse_button_pressed(0):
+            if "sound_wave" in obiekt_gracz.posiadane_gadzety:
+                obiekt_gracz.aktualny_gadzet = "sound_wave"
+            else:
+                pr.play_sound(ui_cancel_audio)
+
+        if "battery" in obiekt_gracz.posiadane_gadzety:
+            pr.draw_rectangle(288,296,64,64,pr.WHITE)
+            pr.draw_texture_ex(ui_battery_texture,pr.Vector2(288,296),0,1,pr.WHITE)
+        else:
+            pr.draw_rectangle(288,296,64,64,pr.RED)
+            pr.draw_texture_ex(ui_battery_texture,pr.Vector2(288,296),0,1,pr.RED)
+        if pr.get_mouse_x() > 288 and pr.get_mouse_x()<352 and pr.get_mouse_y() > 296 and pr.get_mouse_y() < 360 and pr.is_mouse_button_pressed(0):
+            if "battery" in obiekt_gracz.posiadane_gadzety:
+                obiekt_gracz.aktualny_gadzet = "battery"
+            else:
+                pr.play_sound(ui_cancel_audio)
+
+        if "medkit" in obiekt_gracz.posiadane_gadzety:
+            pr.draw_rectangle(384,296,64,64,pr.WHITE)
+            pr.draw_texture_ex(ui_medkit_texture,pr.Vector2(384,296),0,1,pr.WHITE)
+        else:
+            pr.draw_rectangle(384,296,64,64,pr.RED)
+            pr.draw_texture_ex(ui_medkit_texture,pr.Vector2(384,296),0,1,pr.RED)
+        if pr.get_mouse_x() > 384 and pr.get_mouse_x()<448 and pr.get_mouse_y() > 296 and pr.get_mouse_y() < 360 and pr.is_mouse_button_pressed(0):
+            if "medkit" in obiekt_gracz.posiadane_gadzety:
+                obiekt_gracz.aktualny_gadzet = "medkit"
+            else:
+                pr.play_sound(ui_cancel_audio)
+
 
     global level_shift_animation
     if(level_shift_animation >0):
@@ -734,6 +864,19 @@ def Rysowanie_Broni(nazwa,x,y,obrot):
                 pr.draw_texture_tiled(lego_barrel_texture,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
             case "golden_barrel":
                 pr.draw_texture_tiled(golden_barrel_texture,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
+
+def Rysowanie_Gadzetu(nazwa,x,y,obrot):
+    match nazwa:
+        case "sand_bag":
+            pr.draw_texture_tiled(sand_bag_sprite,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
+        case "rocket_luncher":
+            pr.draw_texture_tiled(rocket_luncher_sprite,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
+        case "sound_wave":
+            pr.draw_texture_tiled(sound_wave_sprite,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
+        case "battery":
+            pr.draw_texture_tiled(battery_sprite,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
+        case "medkit":
+            pr.draw_texture_tiled(medkit_sprite,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
 
 def strzal(poczatekx,poczateky,kierunek,nazwa):
     targets = []
@@ -983,6 +1126,65 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             obj.zadaj_obrazenia(8)
                             temp = False
             
+def Gadzet(nazwa):
+    aktualny_x = math.floor(pr.get_mouse_x()/64)
+    aktualny_y = math.floor(pr.get_mouse_y()/64)
+    match nazwa:
+        case "sand_bag":
+            if(CzyJestobiekt(aktualny_x,aktualny_y)):
+                pr.play_sound(ui_cancel_audio)
+                obiekt_gracz.aktualnaenergia += koszty_gadzetow["sand_bag"]
+            else:
+                przeszkody_arr.append(przeszkody(aktualny_x,aktualny_y,"sand_bag"))
+                obiekt_gracz.aktualny_gadzet = ""
+                obiekt_gracz.posiadane_gadzety.remove("sand_bag")
+        case "rocket_luncher":
+            if(CzyJestobiekt(aktualny_x,aktualny_y)):
+                if obiekt_gracz.x == aktualny_x and obiekt_gracz.y == aktualny_y:
+                    obiekt_gracz.zadaj_obrazenia(2)
+                for obj in przeciwnicy_arr:
+                    if obj.x == aktualny_x and obj.y == aktualny_y:
+                        obj.zadaj_obrazenia(2)
+                for obj in przeszkody_arr:
+                    if obj.x == aktualny_x and obj.y == aktualny_y:
+                        obj.zadaj_obrazenia(2)
+                obiekt_gracz.aktualny_gadzet = ""
+                obiekt_gracz.posiadane_gadzety.remove("rocket_luncher")
+            else:
+                pr.play_sound(ui_cancel_audio)
+                obiekt_gracz.aktualnaenergia += koszty_gadzetow["rocket_luncher"]
+        case "sound_wave": #ręcznie robie bo nie chce mi się bawić w algorytmy itp
+            targets = []
+            targets.append([obiekt_gracz.x-3,obiekt_gracz.y])
+            for x in range(5):
+                for y in range(5):
+                    targets.append([obiekt_gracz.x+x-2,obiekt_gracz.y+y-2])
+            targets.append([obiekt_gracz.x+3,obiekt_gracz.y])
+            targets.append([obiekt_gracz.x,obiekt_gracz.y+3])
+            targets.append([obiekt_gracz.x,obiekt_gracz.y-3])
+            targets.remove([obiekt_gracz.x,obiekt_gracz.y])
+            for i in targets:
+                if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
+                    obiekt_gracz.zadaj_obrazenia(3)
+                for obj in przeciwnicy_arr:
+                    if obj.x == i[0] and obj.y ==i[1]:
+                        obj.zadaj_obrazenia(3)
+                for obj in przeszkody_arr:
+                    if obj.x == i[0] and obj.y == i[1]:
+                        obj.zadaj_obrazenia(3)
+            obiekt_gracz.aktualny_gadzet = ""
+            obiekt_gracz.posiadane_gadzety.remove("sound_wave")
+                        
+        case "battery":
+            obiekt_gracz.aktualnaenergia = obiekt_gracz.maxenergii
+            obiekt_gracz.aktualny_gadzet = ""
+            obiekt_gracz.posiadane_gadzety.remove("battery")
+        case "medkit":
+            obiekt_gracz.hp = obiekt_gracz.maxhp
+            obiekt_gracz.aktualny_gadzet = ""
+            obiekt_gracz.posiadane_gadzety.remove("medkit")
+        case _:
+            print("program próbuje uzyc gadzetu który nie ma zaprogramowanego zachowania, jeżeli jakimś cudem ta linijka wyskakuje prosze skontaktuj się ze mną bo musiałem gdzieś literówkę zrobić")
 
 def nowy_poziom():
     global poziom,obiekt_gracz,przeciwnicy_arr,przeciwnicy_arr,przeszkody_arr,level_shift_animation
@@ -996,10 +1198,10 @@ def nowy_poziom():
     if (obiekt_gracz.hp > obiekt_gracz.maxhp): #jezeli gracz ma wiecej hp niz maxhp
         obiekt_gracz.hp = obiekt_gracz.maxhp #ustawia hp na max hp
     if poziom < 10:
-        przeszkody_arr = [przeszkody(-1,-1) for i in range(10 + poziom *2)]
+        przeszkody_arr = [przeszkody(-1,-1,random.randint(0,2)) for i in range(10 + poziom *2)]
         przeciwnicy_arr = [przeciwnik(-1,-1) for i in range(5 + math.floor(poziom/2))]
     else:
-        przeszkody_arr = [przeszkody(-1,-1) for i in range(30)]
+        przeszkody_arr = [przeszkody(-1,-1,random.randint(0,2)) for i in range(30)]
         przeciwnicy_arr = [przeciwnik(-1,-1) for i in range(10)]
     for obj in przeszkody_arr:
         temp = True
@@ -1060,6 +1262,8 @@ while not pr.window_should_close():
             Poruszanie_gracza(5)
         if(pr.is_key_pressed(pr.KEY_P) and menu_eq==False): #kolejna tura
             Kolejna_Tura()
+        if(pr.is_key_pressed(pr.KEY_G) and menu_eq==False): #gadżet
+            obiekt_gracz.uzycie_gadzetu()
         if(pr.is_key_pressed(pr.KEY_SPACE) and menu_eq==False): #strzal
             obiekt_gracz.strzel()
         if(pr.is_key_pressed(pr.KEY_M) ): #odpala menu eq
