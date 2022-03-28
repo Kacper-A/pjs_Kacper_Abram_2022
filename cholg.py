@@ -18,6 +18,7 @@ start_menu = True #zmienna ktora pozazuje czy gracz jest w menu startowym gdzie 
 poziom = 0 #poziom na jakim aktualnie jest gracz
 level_shift_animation = 0 #0 - brak animacii 90 - poczatek animacii (1.5 sek powinna trwac animacja)
 koszty_strzalu = {"railgun_barrel":3,"normal_barrel":3,"prisma_barrel":4,"bubble_barrel":2,"cow_barrel":3,"shotgun_barrel":6,"chain_barrel":1,"sword_barrel":5,"lego_barrel":3,"golden_barrel":6}
+koszty_gadzetow = {"sand_bag":1,"rocket_luncher":2,"sound_wave":1,"battery":0,"medkit":0}
 pr.init_audio_device()
 class gracz:
     def __init__(self,posx,posy):
@@ -70,28 +71,39 @@ class gracz:
             print("koniec gry")
         else:
             temp = Damage(self.x,self.y)
+    def uzycie_gadzetu(self):
+        if self.aktualny_gadzet in koszty_gadzetow:
+            if self.aktualnaenergia >= koszty_gadzetow[self.aktualny_gadzet]:
+                self.aktualnaenergia -=koszty_gadzetow[self.aktualny_gadzet]
+                Gadzet(self.aktualny_gadzet)
+        else:
+            pr.play_sound(ui_cancel_audio)
     
 
 
 class przeszkody:
-    def __init__(self,posx,posy):
+    def __init__(self,posx,posy,rodzaj):
         self.x=posx
         self.y=posy
-        self.hp = 10
-        temp = random.randint(0,2)
-        match temp:
+        match rodzaj:
             case 0:
+                self.hp = 10
                 self.sprite = budynek_tile1
             case 1:
+                self.hp = 7
                 self.sprite = budynek_tile2
             case 2:
+                self.hp = 4
                 self.sprite = budynek_tile3
+            case "sand_bag":
+                self.hp = 30
+                self.sprite = ui_sandbags_texture
     def narysuj(self):
         pr.draw_texture(self.sprite,self.x*64,self.y*64,pr.WHITE)
         if (pr.get_mouse_x() > self.x*64 and pr.get_mouse_x() < (self.x+1)*64 and pr.get_mouse_y() > self.y*64 and pr.get_mouse_y() < (self.y+1)*64 and menu_eq == False):
             pr.draw_text(str(self.hp),self.x*64,self.y*64,64,pr.YELLOW)
     def zadaj_obrazenia(self,obrazenia):
-        self.hp -= obrazenia
+        self.hp -= obrazenia 
         if (self.hp <=0):
             temp = Explosion(self.x,self.y)
             przeszkody_arr.remove(self)
@@ -462,7 +474,7 @@ ui_cancel_audio = pr.load_sound("sounds/ui_cancel.wav")
 
 
 obiekt_gracz = gracz(-1,-1)
-przeszkody_arr = [przeszkody(-1,-1) for i in range(10)]
+przeszkody_arr = [przeszkody(-1,-1,random.randint(0,2)) for i in range(10)]
 przeciwnicy_arr = [przeciwnik(-1,-1) for i in range(1)]
 trawy_arr =[trawa(x,y) for x in range(15) for y in range(15)]
 smoke_arr = []
@@ -1114,6 +1126,65 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             obj.zadaj_obrazenia(8)
                             temp = False
             
+def Gadzet(nazwa):
+    aktualny_x = math.floor(pr.get_mouse_x()/64)
+    aktualny_y = math.floor(pr.get_mouse_y()/64)
+    match nazwa:
+        case "sand_bag":
+            if(CzyJestobiekt(aktualny_x,aktualny_y)):
+                pr.play_sound(ui_cancel_audio)
+                obiekt_gracz.aktualnaenergia += koszty_gadzetow["sand_bag"]
+            else:
+                przeszkody_arr.append(przeszkody(aktualny_x,aktualny_y,"sand_bag"))
+                obiekt_gracz.aktualny_gadzet = ""
+                obiekt_gracz.posiadane_gadzety.remove("sand_bag")
+        case "rocket_luncher":
+            if(CzyJestobiekt(aktualny_x,aktualny_y)):
+                if obiekt_gracz.x == aktualny_x and obiekt_gracz.y == aktualny_y:
+                    obiekt_gracz.zadaj_obrazenia(2)
+                for obj in przeciwnicy_arr:
+                    if obj.x == aktualny_x and obj.y == aktualny_y:
+                        obj.zadaj_obrazenia(2)
+                for obj in przeszkody_arr:
+                    if obj.x == aktualny_x and obj.y == aktualny_y:
+                        obj.zadaj_obrazenia(2)
+                obiekt_gracz.aktualny_gadzet = ""
+                obiekt_gracz.posiadane_gadzety.remove("rocket_luncher")
+            else:
+                pr.play_sound(ui_cancel_audio)
+                obiekt_gracz.aktualnaenergia += koszty_gadzetow["rocket_luncher"]
+        case "sound_wave": #ręcznie robie bo nie chce mi się bawić w algorytmy itp
+            targets = []
+            targets.append([obiekt_gracz.x-3,obiekt_gracz.y])
+            for x in range(5):
+                for y in range(5):
+                    targets.append([obiekt_gracz.x+x-2,obiekt_gracz.y+y-2])
+            targets.append([obiekt_gracz.x+3,obiekt_gracz.y])
+            targets.append([obiekt_gracz.x,obiekt_gracz.y+3])
+            targets.append([obiekt_gracz.x,obiekt_gracz.y-3])
+            targets.remove([obiekt_gracz.x,obiekt_gracz.y])
+            for i in targets:
+                if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
+                    obiekt_gracz.zadaj_obrazenia(3)
+                for obj in przeciwnicy_arr:
+                    if obj.x == i[0] and obj.y ==i[1]:
+                        obj.zadaj_obrazenia(3)
+                for obj in przeszkody_arr:
+                    if obj.x == i[0] and obj.y == i[1]:
+                        obj.zadaj_obrazenia(3)
+            obiekt_gracz.aktualny_gadzet = ""
+            obiekt_gracz.posiadane_gadzety.remove("sound_wave")
+                        
+        case "battery":
+            obiekt_gracz.aktualnaenergia = obiekt_gracz.maxenergii
+            obiekt_gracz.aktualny_gadzet = ""
+            obiekt_gracz.posiadane_gadzety.remove("battery")
+        case "medkit":
+            obiekt_gracz.hp = obiekt_gracz.maxhp
+            obiekt_gracz.aktualny_gadzet = ""
+            obiekt_gracz.posiadane_gadzety.remove("medkit")
+        case _:
+            print("program próbuje uzyc gadzetu który nie ma zaprogramowanego zachowania, jeżeli jakimś cudem ta linijka wyskakuje prosze skontaktuj się ze mną bo musiałem gdzieś literówkę zrobić")
 
 def nowy_poziom():
     global poziom,obiekt_gracz,przeciwnicy_arr,przeciwnicy_arr,przeszkody_arr,level_shift_animation
@@ -1127,10 +1198,10 @@ def nowy_poziom():
     if (obiekt_gracz.hp > obiekt_gracz.maxhp): #jezeli gracz ma wiecej hp niz maxhp
         obiekt_gracz.hp = obiekt_gracz.maxhp #ustawia hp na max hp
     if poziom < 10:
-        przeszkody_arr = [przeszkody(-1,-1) for i in range(10 + poziom *2)]
+        przeszkody_arr = [przeszkody(-1,-1,random.randint(0,2)) for i in range(10 + poziom *2)]
         przeciwnicy_arr = [przeciwnik(-1,-1) for i in range(5 + math.floor(poziom/2))]
     else:
-        przeszkody_arr = [przeszkody(-1,-1) for i in range(30)]
+        przeszkody_arr = [przeszkody(-1,-1,random.randint(0,2)) for i in range(30)]
         przeciwnicy_arr = [przeciwnik(-1,-1) for i in range(10)]
     for obj in przeszkody_arr:
         temp = True
@@ -1191,6 +1262,8 @@ while not pr.window_should_close():
             Poruszanie_gracza(5)
         if(pr.is_key_pressed(pr.KEY_P) and menu_eq==False): #kolejna tura
             Kolejna_Tura()
+        if(pr.is_key_pressed(pr.KEY_G) and menu_eq==False): #gadżet
+            obiekt_gracz.uzycie_gadzetu()
         if(pr.is_key_pressed(pr.KEY_SPACE) and menu_eq==False): #strzal
             obiekt_gracz.strzel()
         if(pr.is_key_pressed(pr.KEY_M) ): #odpala menu eq
