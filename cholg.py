@@ -13,12 +13,14 @@ pr.set_target_fps(60)
 
 Plansza =[[0 for x in range(15)] for y in range(15)] #plansza 15x15 glownie uzywania do trawy
 menu_eq = False #zmienna ktora pokazuje ze jest sie w menu
+restart_screen = False
 PlayerTurn=True #zmienna ktora pokazuje ze jest tura gracza
 start_menu = True #zmienna ktora pozazuje czy gracz jest w menu startowym gdzie jest przycisk start czy cos?
 poziom = 0 #poziom na jakim aktualnie jest gracz
 level_shift_animation = 0 #0 - brak animacii 90 - poczatek animacii (1.5 sek powinna trwac animacja)
 koszty_strzalu = {"railgun_barrel":3,"normal_barrel":3,"prisma_barrel":4,"bubble_barrel":2,"cow_barrel":3,"shotgun_barrel":6,"chain_barrel":1,"sword_barrel":5,"lego_barrel":3,"golden_barrel":6}
 koszty_gadzetow = {"sand_bag":1,"rocket_luncher":2,"sound_wave":1,"battery":0,"medkit":0}
+
 pr.init_audio_device()
 class gracz:
     def __init__(self,posx,posy):
@@ -41,15 +43,19 @@ class gracz:
                 case 0:
                     pr.draw_texture_tiled(czolg,pr.Rectangle(0,0,64,64),pr.Rectangle(self.x*64+32 ,self.y*64+32+(self.animacja*4),64,64),pr.Vector2(32,32),90*self.obrot,1,pr.WHITE)
                     Rysowanie_Broni(self.aktualna_bron,self.x,self.y+(self.animacja/16),self.obrot)
+                    Rysowanie_Gadzetu(self.aktualny_gadzet,self.x,self.y+(self.animacja/16),self.obrot)
                 case 1:
                     pr.draw_texture_tiled(czolg,pr.Rectangle(0,0,64,64),pr.Rectangle(self.x*64+32-(self.animacja*4) ,self.y*64+32,64,64),pr.Vector2(32,32),90*self.obrot,1,pr.WHITE)
                     Rysowanie_Broni(self.aktualna_bron,self.x-(self.animacja/16),self.y,self.obrot)
+                    Rysowanie_Gadzetu(self.aktualny_gadzet,self.x-(self.animacja/16),self.y,self.obrot)
                 case 2:
                     pr.draw_texture_tiled(czolg,pr.Rectangle(0,0,64,64),pr.Rectangle(self.x*64+32 ,self.y*64+32-(self.animacja*4),64,64),pr.Vector2(32,32),90*self.obrot,1,pr.WHITE)
                     Rysowanie_Broni(self.aktualna_bron,self.x,self.y-(self.animacja/16),self.obrot)
+                    Rysowanie_Gadzetu(self.aktualny_gadzet,self.x,self.y-(self.animacja/16),self.obrot)
                 case 3:
                     pr.draw_texture_tiled(czolg,pr.Rectangle(0,0,64,64),pr.Rectangle(self.x*64+32+(self.animacja*4) ,self.y*64+32,64,64),pr.Vector2(32,32),90*self.obrot,1,pr.WHITE)
                     Rysowanie_Broni(self.aktualna_bron,self.x+(self.animacja/16),self.y,self.obrot)
+                    Rysowanie_Gadzetu(self.aktualny_gadzet,self.x+(self.animacja/16),self.y,self.obrot)
             if (self.animacja >0):
                 self.animacja -=1
             if(self.animacja <0):
@@ -68,9 +74,12 @@ class gracz:
         self.hp -= obrazenia
         if (self.hp <=0):
             temp = Explosion(self.x,self.y)
-            print("koniec gry")
+            pr.play_sound(destroy_audio)
+            global restart_screen
+            restart_screen = True
         else:
             temp = Damage(self.x,self.y)
+            pr.play_sound(hit_audio)
     def uzycie_gadzetu(self):
         if self.aktualny_gadzet in koszty_gadzetow:
             if self.aktualnaenergia >= koszty_gadzetow[self.aktualny_gadzet]:
@@ -106,9 +115,11 @@ class przeszkody:
         self.hp -= obrazenia 
         if (self.hp <=0):
             temp = Explosion(self.x,self.y)
+            pr.play_sound(destroy_audio)
             przeszkody_arr.remove(self)
         else:
             temp = Damage(self.x,self.y)
+            pr.play_sound(hit_audio)
 
 class trawa:
     def __init__(self,posx,posy):
@@ -144,9 +155,11 @@ class przeciwnik:
             temp = Explosion(self.x,self.y) #twozy nowy obiekt "temp" klasy Explosion w miejscu czolgu
             global obiekt_gracz #tylko po to by dodac pieniadze linijke nizej
             obiekt_gracz.money += random.randint(10,30) #jak przeciwnik zostaje zniszczony do pieniędzy gracza zostaje dodane od 10 do 30 pieniędzy włącznie
+            pr.play_sound(destroy_audio)
             przeciwnicy_arr.remove(self) #usuwa sie z listy
         else:
             temp = Damage(self.x,self.y)
+            pr.play_sound(hit_audio)
     def tura_przeciwnika(self): #https://www.youtube.com/watch?v=8SigT_jhz4I - tutorial z jakiego kozystalem do pathfindingu 
         czy_strzelono = False #czolg nie poruszy sie w tej tuze gdy strzeli, nie wazne czy to 1 czy 2 czy 3 ruch
         for i in range(3):
@@ -469,9 +482,21 @@ pr.image_resize(temp,64,64)
 sound_wave_sprite = pr.load_texture_from_image(temp)
 pr.unload_image(temp)
 
-
+bubble_shot_audio = pr.load_sound("sounds/bubble_shot.wav")
+chain_shot_audio = pr.load_sound("sounds/chain_shot.wav")
+cow_shot_audio = pr.load_sound("sounds/cow_shot.wav")
+destroy_audio = pr.load_sound("sounds/destroy.wav")
+golden_shot_audio = pr.load_sound("sounds/golden_shot.wav")
+hit_audio = pr.load_sound("sounds/hit.wav")
+lego_shot_audio = pr.load_sound("sounds/lego_shot.wav")
+normal_shot_audio = pr.load_sound("sounds/normal_shot.wav")
+prisma_shot_audio = pr.load_sound("sounds/prisma_shot.wav")
+railgun_shot_audio = pr.load_sound("sounds/railgun_shot.wav")
+shotgun_shot_audio = pr.load_sound("sounds/shotgun_shot.wav")
+sword_shot_audio = pr.load_sound("sounds/sword_shot.wav")
 ui_cancel_audio = pr.load_sound("sounds/ui_cancel.wav")
 
+dict_dzwiekow = {"railgun_barrel":railgun_shot_audio,"normal_barrel":normal_shot_audio,"prisma_barrel":prisma_shot_audio,"bubble_barrel":bubble_shot_audio,"cow_barrel":cow_shot_audio,"shotgun_barrel":shotgun_shot_audio,"chain_barrel":chain_shot_audio,"sword_barrel":sword_shot_audio,"lego_barrel":lego_shot_audio,"golden_barrel":golden_shot_audio}
 
 obiekt_gracz = gracz(-1,-1)
 przeszkody_arr = [przeszkody(-1,-1,random.randint(0,2)) for i in range(10)]
@@ -880,6 +905,7 @@ def Rysowanie_Gadzetu(nazwa,x,y,obrot):
 
 def strzal(poczatekx,poczateky,kierunek,nazwa):
     targets = []
+    pr.play_sound(dict_dzwiekow[nazwa])
     match nazwa: 
         case "railgun_barrel": #zasieg 4 na wprzod , 4 obr , wszystkie cele
             for i in range(4):
@@ -1243,10 +1269,34 @@ def nowy_poziom():
                 else:
                     temp = False
 
+def Rysowanie_menu_restartu():
+    global start_menu
+    global restart_screen
+    pr.clear_background(pr.WHITE)
+    pr.draw_text("Koniec gry",340,200,64,pr.RED)
+    global poziom
+    temp = "Dotrawles do poziomu:"+str(poziom)
+    pr.draw_text(temp,150,400,64,pr.RED)
+
+    pr.draw_texture(start_button_sprite,448,500,pr.WHITE)
+    if (pr.get_mouse_x()>448 and pr.get_mouse_x()<576 and pr.get_mouse_y() >500 and pr.get_mouse_y() < 564 and pr.is_mouse_button_pressed(0)):
+        restart_screen = False
+        start_menu = True
+        global obiekt_gracz
+        obiekt_gracz = gracz(-1,-1) 
+        poziom = 0
+        nowy_poziom()
+        
+        
+
+
+
 nowy_poziom()
 while not pr.window_should_close():
     if(start_menu == True):
         Rysowanie_Menu_Glownego()
+    elif(restart_screen == True):
+        Rysowanie_menu_restartu()
     else:
         if(pr.is_key_pressed(pr.KEY_W) and menu_eq==False): #jazda na wprost
             Poruszanie_gracza(0)
