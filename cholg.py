@@ -1,6 +1,5 @@
 #todo:
-#przeciwnicy sie respoą na sobie nw czemu (chyba naprawilem)
-#pathfinding i tury przeciwnikow
+
 
 import math
 import random
@@ -299,6 +298,55 @@ class Damage:
         if self.lifetime<=0:
             particles_arr.remove(self)
 
+class Barrel_smoke:
+    def __init__(self,posx,posy,rotation):
+        self.x = posx
+        self.y=posy
+        self.lifetime = 7
+        self.obrot = rotation
+        particles_arr.append(self)
+    def narysuj(self):
+        pr.draw_texture_tiled(barrel_smoke_sheet,pr.Rectangle(0 + (7-self.lifetime)*64,0,64,64),pr.Rectangle(self.x*64+32,self.y*64+32,64,64),pr.Vector2(32,32),90*(self.obrot),1,pr.WHITE)
+        self.lifetime -=1
+        if self.lifetime<=0:
+            particles_arr.remove(self)
+
+class Laser:
+    def __init__(self,posx,posy,rotation):
+        self.x = posx
+        self.y=posy
+        self.lifetime = 9
+        self.obrot = rotation
+        particles_arr.append(self)
+    def narysuj(self):
+        pr.draw_texture_tiled(laser_sheet,pr.Rectangle(0 + (7-self.lifetime)*64,0,64,64),pr.Rectangle(self.x*64+32,self.y*64+32,64,64),pr.Vector2(32,32),90*(self.obrot),1,pr.WHITE)
+        self.lifetime -=1
+        if self.lifetime<=0:
+            particles_arr.remove(self)
+
+class Heling_animation:
+    def __init__(self,posx,posy):
+        self.x = posx
+        self.y=posy
+        self.lifetime = 7
+        particles_arr.append(self)
+    def narysuj(self):
+        pr.draw_texture_tiled(healing_sheet,pr.Rectangle(0 + (7-self.lifetime)*64,0,64,64),pr.Rectangle(self.x*64+32,self.y*64+32,64,64),pr.Vector2(32,32),0,1,pr.WHITE)
+        self.lifetime -=1
+        if self.lifetime<=0:
+            particles_arr.remove(self)
+
+class Battery_animation:
+    def __init__(self,posx,posy):
+        self.x = posx
+        self.y=posy
+        self.lifetime = 7
+        particles_arr.append(self)
+    def narysuj(self):
+        pr.draw_texture_tiled(battery_sheet,pr.Rectangle(0 + (7-self.lifetime)*64,0,64,64),pr.Rectangle(self.x*64+32,self.y*64+32,64,64),pr.Vector2(32,32),0,1,pr.WHITE)
+        self.lifetime -=1
+        if self.lifetime<=0:
+            particles_arr.remove(self)
 
 temp = pr.load_image("sprite/czolg-gracz.png")
 pr.image_resize(temp,64,64)
@@ -308,6 +356,26 @@ pr.unload_image(temp)
 temp = pr.load_image("sprite/explosion.png")
 pr.image_resize(temp,448,64)
 explosion_sheet = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/battery_sheet.png")
+pr.image_resize(temp,448,64)
+battery_sheet = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/healing_sheet.png")
+pr.image_resize(temp,448,64)
+healing_sheet = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/laser_animation.png")
+pr.image_resize(temp,576,64)
+laser_sheet = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/barrel_smoke_animation.png")
+pr.image_resize(temp,448,64)
+barrel_smoke_sheet = pr.load_texture_from_image(temp)
 pr.unload_image(temp)
 
 temp = pr.load_image("sprite/steam_dash.png")
@@ -495,6 +563,9 @@ railgun_shot_audio = pr.load_sound("sounds/railgun_shot.wav")
 shotgun_shot_audio = pr.load_sound("sounds/shotgun_shot.wav")
 sword_shot_audio = pr.load_sound("sounds/sword_shot.wav")
 ui_cancel_audio = pr.load_sound("sounds/ui_cancel.wav")
+sound_wave_audio = pr.load_sound("sounds/sound_wave.wav")
+rocket_luncher_audio = pr.load_sound("sounds/rocket_luncher.wav")
+sandbag_medkit_battery_audio = pr.load_sound("sounds/sandbag_medkit_battery.wav")
 
 dict_dzwiekow = {"railgun_barrel":railgun_shot_audio,"normal_barrel":normal_shot_audio,"prisma_barrel":prisma_shot_audio,"bubble_barrel":bubble_shot_audio,"cow_barrel":cow_shot_audio,"shotgun_barrel":shotgun_shot_audio,"chain_barrel":chain_shot_audio,"sword_barrel":sword_shot_audio,"lego_barrel":lego_shot_audio,"golden_barrel":golden_shot_audio}
 
@@ -532,6 +603,7 @@ def RysowanieUi():
     pr.draw_rectangle(970,928,40,3,pr.RED)
     pr.draw_text(str(obiekt_gracz.hp),976,900,32,pr.RED)
     pr.draw_text(str(poziom),976,870,32,pr.BLUE)
+    pr.draw_text(str(obiekt_gracz.money),976,840,32,pr.YELLOW)
     if menu_eq == True:
         
         pr.draw_rectangle(0,0,1024,960,pr.Color(0,0,0,100))
@@ -912,12 +984,17 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                 match kierunek:
                     case 0:
                         targets.append([poczatekx,poczateky-i-1])
+                        Laser(poczatekx,poczateky-i-1,kierunek)
                     case 1:
                         targets.append([poczatekx+i+1,poczateky])
+                        Laser(poczatekx+i+1,poczateky,kierunek)
                     case 2:
                         targets.append([poczatekx,poczateky+i+1])
+                        Laser(poczatekx,poczateky+i+1,kierunek)
                     case 3:
                         targets.append([poczatekx-i-1,poczateky])
+                        Laser(poczatekx-i-1,poczateky,kierunek)
+                        
     
             for i in targets:
                 if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
@@ -929,6 +1006,15 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                     if obj.x == i[0] and obj.y == i[1]:
                         obj.zadaj_obrazenia(4)
         case "normal_barrel": #zasieg 3 w przod , 5 obr, pierwszy cel
+            match kierunek:
+                case 0:
+                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
+                case 1:
+                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
+                case 2:
+                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
+                case 3:
+                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
             temp = True #zmienna sie zmienia na False jak trafi cel
             for i in range(3):
                 match kierunek:
@@ -958,12 +1044,16 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                 match kierunek:
                     case 0:
                         targets.append([poczatekx,poczateky-i-1])
+                        Laser(poczatekx,poczateky-i-1,kierunek)
                     case 1:
                         targets.append([poczatekx+i+1,poczateky])
+                        Laser(poczatekx+i+1,poczateky,kierunek)
                     case 2:
                         targets.append([poczatekx,poczateky+i+1])
+                        Laser(poczatekx,poczateky+i+1,kierunek)
                     case 3:
                         targets.append([poczatekx-i-1,poczateky])
+                        Laser(poczatekx-i-1,poczateky,kierunek)
     
             for i in targets:
                 if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
@@ -975,6 +1065,15 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                     if obj.x == i[0] and obj.y == i[1]:
                         obj.zadaj_obrazenia(3)
         case "bubble_barrel": #zasieg 5 na wprzod , 2 obr, pierwszy cel
+            match kierunek:
+                case 0:
+                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
+                case 1:
+                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
+                case 2:
+                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
+                case 3:
+                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
             temp = True
             for i in range(5):
                 match kierunek:
@@ -1000,6 +1099,15 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             obj.zadaj_obrazenia(2)
                             temp = False
         case "cow_barrel": #zasieg 3 na wprzod , 7 obr, pierwszy cel
+            match kierunek:
+                case 0:
+                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
+                case 1:
+                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
+                case 2:
+                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
+                case 3:
+                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
             temp = True
             for i in range(3):
                 match kierunek:
@@ -1025,6 +1133,15 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             obj.zadaj_obrazenia(7)
                             temp = False
         case "shotgun_barrel": #zasieg prostokat 3x2 na wprzod, 5 obr, wszystkie cele
+            match kierunek:
+                case 0:
+                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
+                case 1:
+                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
+                case 2:
+                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
+                case 3:
+                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
             for i in range(2):
                 match kierunek:
                     case 0:
@@ -1053,6 +1170,15 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                         if obj.x == i[0] and obj.y == i[1]:
                             obj.zadaj_obrazenia(5)
         case "chain_barrel": #zasieg 4 na wprzod , 2 obr, pierwszy cel
+            match kierunek:
+                case 0:
+                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
+                case 1:
+                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
+                case 2:
+                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
+                case 3:
+                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
             temp = True
             for i in range(4):
                 match kierunek:
@@ -1078,6 +1204,15 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             obj.zadaj_obrazenia(2)
                             temp = False
         case "sword_barrel": #zaieg 1 na wprzod, 15 obr, pierwszy cel
+            match kierunek:
+                case 0:
+                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
+                case 1:
+                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
+                case 2:
+                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
+                case 3:
+                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
             temp = True
             match kierunek:
                 case 0:
@@ -1102,6 +1237,15 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             obj.zadaj_obrazenia(15)
                             temp = False
         case "lego_barrel": #zaieg 8 na wprzod, 3 obr, pierwszy cel
+            match kierunek:
+                case 0:
+                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
+                case 1:
+                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
+                case 2:
+                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
+                case 3:
+                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
             temp = True
             for i in range(8):
                 match kierunek:
@@ -1127,6 +1271,15 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             obj.zadaj_obrazenia(3)
                             temp = False
         case "golden_barrel": #zaieg 4 na wprzod, 8 obr, pierwszy cel
+            match kierunek:
+                case 0:
+                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
+                case 1:
+                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
+                case 2:
+                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
+                case 3:
+                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
             temp = True
             for i in range(4):
                 match kierunek:
@@ -1153,6 +1306,9 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             temp = False
             
 def Gadzet(nazwa):
+    global obiekt_gracz
+    global przeszkody_arr
+    global przeciwnicy_arr
     aktualny_x = math.floor(pr.get_mouse_x()/64)
     aktualny_y = math.floor(pr.get_mouse_y()/64)
     match nazwa:
@@ -1162,10 +1318,13 @@ def Gadzet(nazwa):
                 obiekt_gracz.aktualnaenergia += koszty_gadzetow["sand_bag"]
             else:
                 przeszkody_arr.append(przeszkody(aktualny_x,aktualny_y,"sand_bag"))
+                pr.play_sound(sandbag_medkit_battery_audio)
                 obiekt_gracz.aktualny_gadzet = ""
                 obiekt_gracz.posiadane_gadzety.remove("sand_bag")
         case "rocket_luncher":
+            
             if(CzyJestobiekt(aktualny_x,aktualny_y)):
+                pr.play_sound(rocket_luncher_audio)
                 if obiekt_gracz.x == aktualny_x and obiekt_gracz.y == aktualny_y:
                     obiekt_gracz.zadaj_obrazenia(2)
                 for obj in przeciwnicy_arr:
@@ -1180,6 +1339,7 @@ def Gadzet(nazwa):
                 pr.play_sound(ui_cancel_audio)
                 obiekt_gracz.aktualnaenergia += koszty_gadzetow["rocket_luncher"]
         case "sound_wave": #ręcznie robie bo nie chce mi się bawić w algorytmy itp
+            pr.play_sound(sound_wave_audio)
             targets = []
             targets.append([obiekt_gracz.x-3,obiekt_gracz.y])
             for x in range(5):
@@ -1202,13 +1362,17 @@ def Gadzet(nazwa):
             obiekt_gracz.posiadane_gadzety.remove("sound_wave")
                         
         case "battery":
+            pr.play_sound(sandbag_medkit_battery_audio)
             obiekt_gracz.aktualnaenergia = obiekt_gracz.maxenergii
             obiekt_gracz.aktualny_gadzet = ""
             obiekt_gracz.posiadane_gadzety.remove("battery")
+            Battery_animation(obiekt_gracz.x,obiekt_gracz.y)
         case "medkit":
+            pr.play_sound(sandbag_medkit_battery_audio)
             obiekt_gracz.hp = obiekt_gracz.maxhp
             obiekt_gracz.aktualny_gadzet = ""
             obiekt_gracz.posiadane_gadzety.remove("medkit")
+            Heling_animation(obiekt_gracz.x,obiekt_gracz.y)
         case _:
             print("program próbuje uzyc gadzetu który nie ma zaprogramowanego zachowania, jeżeli jakimś cudem ta linijka wyskakuje prosze skontaktuj się ze mną bo musiałem gdzieś literówkę zrobić")
 
