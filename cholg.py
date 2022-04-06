@@ -13,12 +13,14 @@ pr.set_target_fps(60)
 Plansza =[[0 for x in range(15)] for y in range(15)] #plansza 15x15 glownie uzywania do trawy
 menu_eq = False #zmienna ktora pokazuje ze jest sie w menu
 restart_screen = False
+shop_screen = False
 PlayerTurn=True #zmienna ktora pokazuje ze jest tura gracza
 start_menu = True #zmienna ktora pozazuje czy gracz jest w menu startowym gdzie jest przycisk start czy cos?
 poziom = 0 #poziom na jakim aktualnie jest gracz
 level_shift_animation = 0 #0 - brak animacii 90 - poczatek animacii (1.5 sek powinna trwac animacja)
 koszty_strzalu = {"railgun_barrel":3,"normal_barrel":3,"prisma_barrel":4,"bubble_barrel":2,"cow_barrel":3,"shotgun_barrel":6,"chain_barrel":1,"sword_barrel":5,"lego_barrel":3,"golden_barrel":6}
 koszty_gadzetow = {"sand_bag":1,"rocket_luncher":2,"sound_wave":1,"battery":0,"medkit":0}
+bought_items_counter =0
 
 pr.init_audio_device()
 class gracz:
@@ -28,14 +30,15 @@ class gracz:
         self.maxenergii = 8 #maxymalna energia jaka gracz moze posiadac
         self.aktualnaenergia = 8 #aktualna energia potrzebna do wykonywania czynnosci takich jak poruszanie sie, strzelanie czy zmienianie broni
         self.obrot = 0 #obrot gracza od 0 do 3 
-        self.hp = 25
-        self.maxhp = 25
-        self.posiadane_bronie = ["railgun_barrel","normal_barrel","prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"] #lista posiadanych barreli przez gracza
-        self.posiadane_gadzety = ["sand_bag","rocket_luncher","sound_wave","battery","medkit"]
+        self.hp = 50
+        self.maxhp = 50
+        self.posiadane_bronie = ["railgun_barrel","normal_barrel"] #lista posiadanych barreli przez gracza   ,"prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"
+        self.posiadane_gadzety = [] #"sand_bag","rocket_luncher","sound_wave","battery","medkit"
+        self.posiadane_karty = []
         self.aktualna_bron = "railgun_barrel" #jaka jest aktualna bron zalozona przez gracza
         self.aktualny_gadzet = ""
         self.animacja = 0 #0 to koniec/brak animacji 16 to poczatek
-        self.money = 50 #pieniądze używane do kupowania w sklepie
+        self.money = 100 #pieniądze używane do kupowania w sklepie
     def narysuj(self):
         if(self.animacja !=0):
             match self.obrot:
@@ -550,6 +553,54 @@ pr.image_resize(temp,64,64)
 sound_wave_sprite = pr.load_texture_from_image(temp)
 pr.unload_image(temp)
 
+temp = pr.load_image("sprite/karty/tyl_karty.png")
+tyl_karty_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/karty/karta1.png")
+karta1_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/karty/karta2.png")
+karta2_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/karty/karta3.png")
+karta3_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/karty/karta4.png")
+karta4_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/karty/karta5.png")
+karta5_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/karty/karta6.png")
+karta6_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/karty/karta7.png")
+karta7_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/karty/karta8.png")
+karta8_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/karty/karta9.png")
+karta9_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/karty/karta10.png")
+karta10_sprite = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
+temp = pr.load_image("sprite/kolejny_poziom_przycisk.png")
+kolejny_poziom_przycisk = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
 bubble_shot_audio = pr.load_sound("sounds/bubble_shot.wav")
 chain_shot_audio = pr.load_sound("sounds/chain_shot.wav")
 cow_shot_audio = pr.load_sound("sounds/cow_shot.wav")
@@ -589,9 +640,33 @@ def RysowaniePlanszy():
     for obj in particles_arr:
         obj.narysuj()
 
+def Rysowanie_karty(numer_karty,x,y,rotacja,skala):
+    match numer_karty:
+        case "tyl":
+            pr.draw_texture_ex(tyl_karty_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
+        case "1":
+            pr.draw_texture_ex(karta1_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
+        case "2":
+            pr.draw_texture_ex(karta2_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
+        case "3":
+            pr.draw_texture_ex(karta3_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
+        case "4":
+            pr.draw_texture_ex(karta4_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
+        case "5":
+            pr.draw_texture_ex(karta5_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
+        case "6":
+            pr.draw_texture_ex(karta6_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
+        case "7":
+            pr.draw_texture_ex(karta7_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
+        case "8":
+            pr.draw_texture_ex(karta8_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
+        case "9":
+            pr.draw_texture_ex(karta9_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
+        case "10":
+            pr.draw_texture_ex(karta10_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
+
 
 def RysowanieUi():
-    
     global obiekt_gracz
     for i in range(obiekt_gracz.maxenergii):
         if(i<obiekt_gracz.aktualnaenergia):
@@ -599,11 +674,11 @@ def RysowanieUi():
         else:
             pr.draw_texture(energy_empty_texture,976,16+i*48,pr.WHITE)
     
-    pr.draw_text(str(obiekt_gracz.maxhp),976,930,32,pr.RED)
+    pr.draw_text(str(obiekt_gracz.maxhp),976,932,16,pr.RED)
     pr.draw_rectangle(970,928,40,3,pr.RED)
-    pr.draw_text(str(obiekt_gracz.hp),976,900,32,pr.RED)
+    pr.draw_text(str(obiekt_gracz.hp),976,913,16,pr.RED)
     pr.draw_text(str(poziom),976,870,32,pr.BLUE)
-    pr.draw_text(str(obiekt_gracz.money),976,840,32,pr.YELLOW)
+    pr.draw_text(str(obiekt_gracz.money),976,900,16,pr.YELLOW)
     if menu_eq == True:
         
         pr.draw_rectangle(0,0,1024,960,pr.Color(0,0,0,100))
@@ -796,6 +871,30 @@ def RysowanieUi():
             else:
                 pr.play_sound(ui_cancel_audio)
 
+        pr.draw_text("Cards",375,400,64,pr.WHITE)
+        if(len(obiekt_gracz.posiadane_karty)>=1):
+            Rysowanie_karty(obiekt_gracz.posiadane_karty[0],200,500,0,4)
+            if pr.get_mouse_x() > 200 and pr.get_mouse_x()<328 and pr.get_mouse_y() > 500 and pr.get_mouse_y() < 756 and pr.is_mouse_button_pressed(0):
+                uzycie_karty(obiekt_gracz.posiadane_karty[0])
+        else:
+            Rysowanie_karty("tyl",200,500,0,4)
+
+        if(len(obiekt_gracz.posiadane_karty)>=2):
+            Rysowanie_karty(obiekt_gracz.posiadane_karty[1],400,500,0,4)
+            if pr.get_mouse_x() > 400 and pr.get_mouse_x()<528 and pr.get_mouse_y() > 500 and pr.get_mouse_y() < 756 and pr.is_mouse_button_pressed(0):
+                uzycie_karty(obiekt_gracz.posiadane_karty[1])
+        else:
+            Rysowanie_karty("tyl",400,500,0,4)
+
+        if(len(obiekt_gracz.posiadane_karty)>=3):
+            Rysowanie_karty(obiekt_gracz.posiadane_karty[2],600,500,0,4)
+            if pr.get_mouse_x() > 600 and pr.get_mouse_x()<728 and pr.get_mouse_y() > 500 and pr.get_mouse_y() < 756 and pr.is_mouse_button_pressed(0):
+                uzycie_karty(obiekt_gracz.posiadane_karty[2])
+        else:
+            Rysowanie_karty("tyl",600,500,0,4)
+        
+        
+
 
     global level_shift_animation
     if(level_shift_animation >0):
@@ -807,6 +906,9 @@ def RysowanieUi():
             pr.draw_text("poziom: "+str(poziom),450+math.floor(level_shift_animation*100 - 3000),500,32,pr.WHITE)
         level_shift_animation -=1
         
+
+
+
 def Rysowanie_Menu_Glownego():
     global start_menu
     pr.clear_background(pr.WHITE)
@@ -1304,6 +1406,111 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                         if obj.x == i[0] and obj.y == i[1]:
                             obj.zadaj_obrazenia(8)
                             temp = False
+
+def uzycie_karty(nazwa):
+    global obiekt_gracz
+    global przeszkody_arr
+    global przeciwnicy_arr
+    obiekt_gracz.posiadane_karty.remove(nazwa)
+    match nazwa:
+        case "tyl": #na wszelki wypadek
+            pr.play_sound(ui_cancel_audio)
+        case "1":
+            obiekt_gracz.zadaj_obrazenia(math.floor(obiekt_gracz.hp/2))
+            for obj in przeszkody_arr:
+                obj.zadaj_obrazenia(math.floor(obj.hp/2))
+            for obj in przeciwnicy_arr:
+                obj.zadaj_obrazenia(math.floor(obj.hp/2))
+        case "2":
+            losowanie = ["sand_bag","rocket_luncher","sound_wave","battery","medkit"]
+            for gadzet in obiekt_gracz.posiadane_gadzety:
+                losowanie.remove(gadzet)
+            temp = len(losowanie)
+            if (temp ==0):
+                obiekt_gracz.money +=10
+                pr.play_sound(ui_cancel_audio)
+            else:
+                liczba = random.randint(0,temp-1)
+                obiekt_gracz.posiadane_gadzety.append(losowanie[liczba])
+        case "3":
+            losowanie = ["railgun_barrel","normal_barrel","prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"]
+            for bron in obiekt_gracz.posiadane_bronie:
+                losowanie.remove(bron)
+            temp = len(losowanie)
+            if (temp ==0):
+                obiekt_gracz.money +=10
+                pr.play_sound(ui_cancel_audio)
+            else:
+                liczba = random.randint(0,temp-1)
+                obiekt_gracz.posiadane_bronie.append(losowanie[liczba])
+        case "4":
+            pr.play_sound(sandbag_medkit_battery_audio)
+            obiekt_gracz.hp = obiekt_gracz.maxhp
+            Heling_animation(obiekt_gracz.x,obiekt_gracz.y)
+        case "5":
+            pr.play_sound(sandbag_medkit_battery_audio)
+            obiekt_gracz.aktualnaenergia = obiekt_gracz.maxenergii
+            Battery_animation(obiekt_gracz.x,obiekt_gracz.y)
+        case "6":
+            przeszkody_arr = []
+        case "7":
+            obiekt_gracz.money += 100
+        case "8":
+            targets = []
+            for i in range(3):
+                targets.append([obiekt_gracz.x+i+1,obiekt_gracz.y])
+                Laser(obiekt_gracz.x+i+1,obiekt_gracz.y,1)
+                targets.append([obiekt_gracz.x-i-1,obiekt_gracz.y])
+                Laser(obiekt_gracz.x-i-1,obiekt_gracz.y,1)
+                targets.append([obiekt_gracz.x,obiekt_gracz.y+1+i])
+                Laser(obiekt_gracz.x,obiekt_gracz.y+1+i,0)
+                targets.append([obiekt_gracz.x,obiekt_gracz.y-1-i])
+                Laser(obiekt_gracz.x,obiekt_gracz.y+1+i,0)
+            for i in targets:
+                if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
+                    obiekt_gracz.zadaj_obrazenia(5)
+                for obj in przeciwnicy_arr:
+                    if obj.x == i[0] and obj.y ==i[1]:
+                        obj.zadaj_obrazenia(5)
+                for obj in przeszkody_arr:
+                    if obj.x == i[0] and obj.y == i[1]:
+                        obj.zadaj_obrazenia(5)
+
+        case "9":
+            targets = []
+            targets.append([obiekt_gracz.x+1,obiekt_gracz.y])
+            Laser(obiekt_gracz.x+1,obiekt_gracz.y,1)
+            targets.append([obiekt_gracz.x-1,obiekt_gracz.y])
+            Laser(obiekt_gracz.x-1,obiekt_gracz.y,1)
+            targets.append([obiekt_gracz.x,obiekt_gracz.y+1])
+            Laser(obiekt_gracz.x,obiekt_gracz.y+1,0)
+            targets.append([obiekt_gracz.x,obiekt_gracz.y-1])
+            Laser(obiekt_gracz.x,obiekt_gracz.y+1,0)
+            for i in targets:
+                if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
+                    obiekt_gracz.zadaj_obrazenia(5)
+                for obj in przeciwnicy_arr:
+                    if obj.x == i[0] and obj.y ==i[1]:
+                        obj.zadaj_obrazenia(5)
+                for obj in przeszkody_arr:
+                    if obj.x == i[0] and obj.y == i[1]:
+                        obj.zadaj_obrazenia(5)
+        case "10":
+            targets = []
+            targets.append([obiekt_gracz.x+1,obiekt_gracz.y+1])
+            targets.append([obiekt_gracz.x-1,obiekt_gracz.y-1])
+            targets.append([obiekt_gracz.x-1,obiekt_gracz.y+1])
+            targets.append([obiekt_gracz.x+1,obiekt_gracz.y-1])
+            for i in targets:
+                if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
+                    obiekt_gracz.zadaj_obrazenia(5)
+                for obj in przeciwnicy_arr:
+                    if obj.x == i[0] and obj.y ==i[1]:
+                        obj.zadaj_obrazenia(5)
+                for obj in przeszkody_arr:
+                    if obj.x == i[0] and obj.y == i[1]:
+                        obj.zadaj_obrazenia(5)
+        
             
 def Gadzet(nazwa):
     global obiekt_gracz
@@ -1451,7 +1658,61 @@ def Rysowanie_menu_restartu():
         poziom = 0
         nowy_poziom()
         
-        
+def Rysowanie_sklepu():
+    global shop_screen
+    global bought_items_counter
+    energy_cost = 100+bought_items_counter*50
+    hp_cost = 50+bought_items_counter*25
+    card_cost = 100+bought_items_counter*50
+    pr.clear_background(pr.WHITE)
+
+    pr.draw_text(str(obiekt_gracz.money),800,100,64,pr.YELLOW)
+
+    pr.draw_rectangle(100,100,128,64,pr.GRAY)
+    pr.draw_texture_ex(energy_empty_texture,pr.Vector2(100,100),0,2,pr.WHITE)
+    pr.draw_text("+",180,100,64,pr.BLACK)
+    temp = "cost: "+str(energy_cost)
+    pr.draw_text(temp,300,100,64,pr.BLACK)
+    if (pr.get_mouse_x()>100 and pr.get_mouse_x()<228 and pr.get_mouse_y() >100 and pr.get_mouse_y() < 164 and pr.is_mouse_button_pressed(0)):
+        if(obiekt_gracz.money >= energy_cost):
+            obiekt_gracz.money -= energy_cost
+            obiekt_gracz.maxenergii += 1
+            bought_items_counter +=1
+        else:
+            pr.play_sound(ui_cancel_audio)
+
+    pr.draw_rectangle(100,300,128,64,pr.GRAY)
+    pr.draw_text("HP+5",105,320,30,pr.BLACK)
+    temp = "cost: "+str(hp_cost)
+    pr.draw_text(temp,300,300,64,pr.BLACK)
+    if (pr.get_mouse_x()>100 and pr.get_mouse_x()<228 and pr.get_mouse_y() >300 and pr.get_mouse_y() < 364 and pr.is_mouse_button_pressed(0)):
+        if(obiekt_gracz.money >= hp_cost):
+            obiekt_gracz.money -= hp_cost
+            obiekt_gracz.maxhp += 5
+            bought_items_counter +=1
+        else:
+            pr.play_sound(ui_cancel_audio)
+
+    pr.draw_texture_ex(tyl_karty_sprite,pr.Vector2(100,500),0,4,pr.WHITE)
+    temp = "cost: "+str(card_cost)
+    pr.draw_text(temp,300,650,64,pr.BLACK)
+    if (pr.get_mouse_x()>100 and pr.get_mouse_x()<228 and pr.get_mouse_y() >500 and pr.get_mouse_y() < 756 and pr.is_mouse_button_pressed(0)):
+        if(obiekt_gracz.money >= card_cost):
+            if(len(obiekt_gracz.posiadane_karty)>=3):
+                pr.play_sound(ui_cancel_audio)
+            else:
+                obiekt_gracz.money -= card_cost
+                obiekt_gracz.posiadane_karty.append(str(random.randint(1,10)))
+                bought_items_counter +=2
+        else:
+            pr.play_sound(ui_cancel_audio)
+
+
+    pr.draw_texture_ex(kolejny_poziom_przycisk,pr.Vector2(100,800),0,2,pr.WHITE)
+    if (pr.get_mouse_x()>100 and pr.get_mouse_x()<228 and pr.get_mouse_y() >800 and pr.get_mouse_y() < 864 and pr.is_mouse_button_pressed(0)):
+        shop_screen = False
+        bought_items_counter =0
+        nowy_poziom()
 
 
 
@@ -1461,6 +1722,8 @@ while not pr.window_should_close():
         Rysowanie_Menu_Glownego()
     elif(restart_screen == True):
         Rysowanie_menu_restartu()
+    elif(shop_screen == True):
+        Rysowanie_sklepu()
     else:
         if(pr.is_key_pressed(pr.KEY_W) and menu_eq==False): #jazda na wprost
             Poruszanie_gracza(0)
@@ -1491,7 +1754,10 @@ while not pr.window_should_close():
         RysowaniePlanszy()
         RysowanieUi()
         if(przeciwnicy_arr ==[]): #jezeli wszyscy przeciwnicy zostali pokonani
-            nowy_poziom()
+            if (poziom %5==0):
+                shop_screen = True
+            else:
+                nowy_poziom()
     
     pr.end_drawing()
 
