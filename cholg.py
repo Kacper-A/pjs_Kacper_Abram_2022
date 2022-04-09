@@ -1,6 +1,7 @@
 #todo:
 
 
+from asyncio.windows_events import NULL
 import math
 import random
 import pyray as pr #pyray to jakas inna biblioteka ale chodzi o "raylib", niewiem czemu w pythonie nazywa sie pyray zamiast raylib
@@ -16,11 +17,14 @@ restart_screen = False
 shop_screen = False
 PlayerTurn=True #zmienna ktora pokazuje ze jest tura gracza
 start_menu = True #zmienna ktora pozazuje czy gracz jest w menu startowym gdzie jest przycisk start czy cos?
+tutorial = False
+tutorial_step = 0
 poziom = 0 #poziom na jakim aktualnie jest gracz
 level_shift_animation = 0 #0 - brak animacii 90 - poczatek animacii (1.5 sek powinna trwac animacja)
 koszty_strzalu = {"railgun_barrel":3,"normal_barrel":3,"prisma_barrel":4,"bubble_barrel":2,"cow_barrel":3,"shotgun_barrel":6,"chain_barrel":1,"sword_barrel":5,"lego_barrel":3,"golden_barrel":6}
 koszty_gadzetow = {"sand_bag":1,"rocket_luncher":2,"sound_wave":1,"battery":0,"medkit":0}
 bought_items_counter =0
+tutorial_var = False
 
 pr.init_audio_device()
 class gracz:
@@ -32,7 +36,7 @@ class gracz:
         self.obrot = 0 #obrot gracza od 0 do 3 
         self.hp = 50
         self.maxhp = 50
-        self.posiadane_bronie = ["railgun_barrel","normal_barrel"] #lista posiadanych barreli przez gracza   ,"prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"
+        self.posiadane_bronie = ["railgun_barrel","normal_barrel","prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"] #lista posiadanych barreli przez gracza   ,"prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"
         self.posiadane_gadzety = [] #"sand_bag","rocket_luncher","sound_wave","battery","medkit"
         self.posiadane_karty = []
         self.aktualna_bron = "railgun_barrel" #jaka jest aktualna bron zalozona przez gracza
@@ -40,32 +44,13 @@ class gracz:
         self.animacja = 0 #0 to koniec/brak animacji 16 to poczatek
         self.money = 100 #pieniądze używane do kupowania w sklepie
     def narysuj(self):
-        if(self.animacja !=0):
-            match self.obrot:
-                case 0:
-                    pr.draw_texture_tiled(czolg,pr.Rectangle(0,0,64,64),pr.Rectangle(self.x*64+32 ,self.y*64+32+(self.animacja*4),64,64),pr.Vector2(32,32),90*self.obrot,1,pr.WHITE)
-                    Rysowanie_Broni(self.aktualna_bron,self.x,self.y+(self.animacja/16),self.obrot)
-                    Rysowanie_Gadzetu(self.aktualny_gadzet,self.x,self.y+(self.animacja/16),self.obrot)
-                case 1:
-                    pr.draw_texture_tiled(czolg,pr.Rectangle(0,0,64,64),pr.Rectangle(self.x*64+32-(self.animacja*4) ,self.y*64+32,64,64),pr.Vector2(32,32),90*self.obrot,1,pr.WHITE)
-                    Rysowanie_Broni(self.aktualna_bron,self.x-(self.animacja/16),self.y,self.obrot)
-                    Rysowanie_Gadzetu(self.aktualny_gadzet,self.x-(self.animacja/16),self.y,self.obrot)
-                case 2:
-                    pr.draw_texture_tiled(czolg,pr.Rectangle(0,0,64,64),pr.Rectangle(self.x*64+32 ,self.y*64+32-(self.animacja*4),64,64),pr.Vector2(32,32),90*self.obrot,1,pr.WHITE)
-                    Rysowanie_Broni(self.aktualna_bron,self.x,self.y-(self.animacja/16),self.obrot)
-                    Rysowanie_Gadzetu(self.aktualny_gadzet,self.x,self.y-(self.animacja/16),self.obrot)
-                case 3:
-                    pr.draw_texture_tiled(czolg,pr.Rectangle(0,0,64,64),pr.Rectangle(self.x*64+32+(self.animacja*4) ,self.y*64+32,64,64),pr.Vector2(32,32),90*self.obrot,1,pr.WHITE)
-                    Rysowanie_Broni(self.aktualna_bron,self.x+(self.animacja/16),self.y,self.obrot)
-                    Rysowanie_Gadzetu(self.aktualny_gadzet,self.x+(self.animacja/16),self.y,self.obrot)
-            if (self.animacja >0):
-                self.animacja -=1
-            if(self.animacja <0):
-                self.animacja +=1
-        else:
-            pr.draw_texture_tiled(czolg,pr.Rectangle(0,0,64,64),pr.Rectangle(self.x*64+32,self.y*64+32,64,64),pr.Vector2(32,32),90*self.obrot,1,pr.WHITE)
-            Rysowanie_Broni(self.aktualna_bron,self.x,self.y,self.obrot)
-            Rysowanie_Gadzetu(self.aktualny_gadzet,self.x,self.y,self.obrot)
+        pr.draw_texture_tiled(czolg,pr.Rectangle(0,0,64,64),pr.Rectangle(self.x*64+32-(self.animacja*4)*(self.obrot%4==1)+(self.animacja*4)*(self.obrot%4==3) ,self.y*64+32+(self.animacja*4)*(self.obrot%4==0)-(self.animacja*4)*(self.obrot%4==2),64,64),pr.Vector2(32,32),90*self.obrot,1,pr.WHITE)
+        Rysowanie_Broni(self.aktualna_bron,self.x-((self.obrot%4==1)*self.animacja/16)+((self.obrot%4==3)*self.animacja/16),self.y+((self.obrot%4==0)*self.animacja/16)-((self.obrot%4==2)*self.animacja/16),self.obrot)
+        Rysowanie_Gadzetu(self.aktualny_gadzet,self.x-((self.obrot%4==1)*self.animacja/16)+((self.obrot%4==3)*self.animacja/16),self.y+((self.obrot%4==0)*self.animacja/16)-((self.obrot%4==2)*self.animacja/16),self.obrot)
+        if (self.animacja >0):
+            self.animacja -=1
+        if(self.animacja <0):
+            self.animacja +=1
         if (pr.get_mouse_x() > self.x*64 and pr.get_mouse_x() < (self.x+1)*64 and pr.get_mouse_y() > self.y*64 and pr.get_mouse_y() < (self.y+1)*64 and menu_eq == False):
                 pr.draw_text(str(self.hp),self.x*64,self.y*64,64,pr.YELLOW)
     def strzel(self):
@@ -104,7 +89,7 @@ class przeszkody:
                 self.hp = 7
                 self.sprite = budynek_tile2
             case 2:
-                self.hp = 4
+                self.hp = 3
                 self.sprite = budynek_tile3
             case "sand_bag":
                 self.hp = 30
@@ -139,12 +124,13 @@ class trawa:
         pr.draw_texture(self.sprite,self.x*64,self.y*64,pr.WHITE)
 
 class przeciwnik:
-    def __init__(self,posx,posy):
+    def __init__(self,posx,posy,tury_PODANE):
         self.x = posx
         self.y = posy
         self.obrot = 0
         self.hp = 10
         self.aktualna_bron = "normal_barrel"
+        self.tury = tury_PODANE
         
     def narysuj(self):
         pr.draw_texture_tiled(przeciwnik_textue,pr.Rectangle(0,0,64,64),pr.Rectangle(self.x*64+32,self.y*64+32,64,64),pr.Vector2(32,32),90*self.obrot,1,pr.WHITE)
@@ -164,7 +150,7 @@ class przeciwnik:
             pr.play_sound(hit_audio)
     def tura_przeciwnika(self): #https://www.youtube.com/watch?v=8SigT_jhz4I - tutorial z jakiego kozystalem do pathfindingu 
         czy_strzelono = False #czolg nie poruszy sie w tej tuze gdy strzeli, nie wazne czy to 1 czy 2 czy 3 ruch
-        for i in range(3):
+        for i in range(self.tury):
             matrix =[[1 for x in range(15)] for y in range(15)]
             for obj in przeciwnicy_arr:
                 
@@ -601,6 +587,11 @@ temp = pr.load_image("sprite/kolejny_poziom_przycisk.png")
 kolejny_poziom_przycisk = pr.load_texture_from_image(temp)
 pr.unload_image(temp)
 
+temp = pr.load_image("sprite/tutorial_button.png")
+pr.image_resize(temp,128,64)
+tutorial_przycisk = pr.load_texture_from_image(temp)
+pr.unload_image(temp)
+
 bubble_shot_audio = pr.load_sound("sounds/bubble_shot.wav")
 chain_shot_audio = pr.load_sound("sounds/chain_shot.wav")
 cow_shot_audio = pr.load_sound("sounds/cow_shot.wav")
@@ -622,7 +613,7 @@ dict_dzwiekow = {"railgun_barrel":railgun_shot_audio,"normal_barrel":normal_shot
 
 obiekt_gracz = gracz(-1,-1)
 przeszkody_arr = [przeszkody(-1,-1,random.randint(0,2)) for i in range(10)]
-przeciwnicy_arr = [przeciwnik(-1,-1) for i in range(1)]
+przeciwnicy_arr = [przeciwnik(-1,-1,3) for i in range(1)]
 trawy_arr =[trawa(x,y) for x in range(15) for y in range(15)]
 smoke_arr = []
 particles_arr = [] #eksplozje itp
@@ -911,11 +902,22 @@ def RysowanieUi():
 
 def Rysowanie_Menu_Glownego():
     global start_menu
+    global tutorial
+    global przeciwnicy_arr
+    global przeszkody_arr
+    global obiekt_gracz
     pr.clear_background(pr.WHITE)
     pr.draw_texture(menu_sprite,256,200,pr.WHITE)
     pr.draw_texture(start_button_sprite,448,500,pr.WHITE)
     if (pr.get_mouse_x()>448 and pr.get_mouse_x()<576 and pr.get_mouse_y() >500 and pr.get_mouse_y() < 564 and pr.is_mouse_button_pressed(0)):
         start_menu = False
+    pr.draw_texture_ex(tutorial_przycisk,pr.Vector2(800,800),0,1,pr.WHITE)
+    if (pr.get_mouse_x()>800 and pr.get_mouse_x()<928 and pr.get_mouse_y() >800 and pr.get_mouse_y() < 864 and pr.is_mouse_button_pressed(0)):
+        start_menu = False
+        tutorial = True
+        przeciwnicy_arr =[]
+        przeszkody_arr=[]
+        obiekt_gracz = gracz(0,0)
             
             
             
@@ -1042,40 +1044,14 @@ def Kolejna_Tura():
         obj.tura_przeciwnika()
 
 def Rysowanie_Broni(nazwa,x,y,obrot):
-    match nazwa:
-            case "railgun_barrel":
-                pr.draw_texture_tiled(railgun_texture,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-            case "normal_barrel":
-                pr.draw_texture_tiled(normal_barrel_texture,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-            case "prisma_barrel":
-                pr.draw_texture_tiled(prisma_barrel_texture,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-            case "bubble_barrel":
-                pr.draw_texture_tiled(bubble_barrel_texture,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-            case "cow_barrel":
-                pr.draw_texture_tiled(cow_barrel_texture,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-            case "shotgun_barrel":
-                pr.draw_texture_tiled(shotgun_barrel_texture,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-            case "chain_barrel":
-                pr.draw_texture_tiled(chain_barrel_texture,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-            case "sword_barrel":
-                pr.draw_texture_tiled(sword_barrel_texture,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-            case "lego_barrel":
-                pr.draw_texture_tiled(lego_barrel_texture,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-            case "golden_barrel":
-                pr.draw_texture_tiled(golden_barrel_texture,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
+    dic_bronie_sprite = {"railgun_barrel":railgun_texture,"normal_barrel":normal_barrel_texture,"prisma_barrel":prisma_barrel_texture,"bubble_barrel":bubble_barrel_texture,"cow_barrel":cow_barrel_texture,"shotgun_barrel":shotgun_barrel_texture,"chain_barrel":chain_barrel_texture,"sword_barrel":sword_barrel_texture,"lego_barrel":lego_barrel_texture,"golden_barrel":golden_barrel_texture}
+    pr.draw_texture_tiled(dic_bronie_sprite[nazwa],pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
+    
 
 def Rysowanie_Gadzetu(nazwa,x,y,obrot):
-    match nazwa:
-        case "sand_bag":
-            pr.draw_texture_tiled(sand_bag_sprite,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-        case "rocket_luncher":
-            pr.draw_texture_tiled(rocket_luncher_sprite,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-        case "sound_wave":
-            pr.draw_texture_tiled(sound_wave_sprite,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-        case "battery":
-            pr.draw_texture_tiled(battery_sprite,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
-        case "medkit":
-            pr.draw_texture_tiled(medkit_sprite,pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
+    if(nazwa !=""):
+        dic_gadzety_sprite = {"sand_bag":sand_bag_sprite,"rocket_luncher":rocket_luncher_sprite,"sound_wave":sound_wave_sprite,"battery":battery_sprite,"medkit":medkit_sprite}
+        pr.draw_texture_tiled(dic_gadzety_sprite[nazwa],pr.Rectangle(0,0,64,64),pr.Rectangle(x*64+32,y*64+32,64,64),pr.Vector2(32,32),90*obrot,1,pr.WHITE)
 
 def strzal(poczatekx,poczateky,kierunek,nazwa):
     targets = []
@@ -1083,21 +1059,9 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
     match nazwa: 
         case "railgun_barrel": #zasieg 4 na wprzod , 4 obr , wszystkie cele
             for i in range(4):
-                match kierunek:
-                    case 0:
-                        targets.append([poczatekx,poczateky-i-1])
-                        Laser(poczatekx,poczateky-i-1,kierunek)
-                    case 1:
-                        targets.append([poczatekx+i+1,poczateky])
-                        Laser(poczatekx+i+1,poczateky,kierunek)
-                    case 2:
-                        targets.append([poczatekx,poczateky+i+1])
-                        Laser(poczatekx,poczateky+i+1,kierunek)
-                    case 3:
-                        targets.append([poczatekx-i-1,poczateky])
-                        Laser(poczatekx-i-1,poczateky,kierunek)
+                targets.append([poczatekx+(i+1)*(kierunek%4==1)-(i+1)*(kierunek%4==3),poczateky-(i+1)*(kierunek%4==0)+(i+1)*(kierunek%4==2)])
+                Laser(poczatekx+(i+1)*(kierunek%4==1)-(i+1)*(kierunek%4==3),poczateky-(i+1)*(kierunek%4==0)+(i+1)*(kierunek%4==2),kierunek)
                         
-    
             for i in targets:
                 if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
                     obiekt_gracz.zadaj_obrazenia(4)
@@ -1108,26 +1072,10 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                     if obj.x == i[0] and obj.y == i[1]:
                         obj.zadaj_obrazenia(4)
         case "normal_barrel": #zasieg 3 w przod , 5 obr, pierwszy cel
-            match kierunek:
-                case 0:
-                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
-                case 1:
-                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
-                case 2:
-                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
-                case 3:
-                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
+            Barrel_smoke(poczatekx-(kierunek%4==3)+(kierunek%4==1),poczateky-(kierunek%4==0)+(kierunek%4==2),kierunek)
             temp = True #zmienna sie zmienia na False jak trafi cel
             for i in range(3):
-                match kierunek:
-                    case 0:
-                        targets.append([poczatekx,poczateky-i-1])
-                    case 1:
-                        targets.append([poczatekx+i+1,poczateky])
-                    case 2:
-                        targets.append([poczatekx,poczateky+i+1])
-                    case 3:
-                        targets.append([poczatekx-i-1,poczateky])
+                targets.append([poczatekx+(i+1)*(kierunek%4==1)-(i+1)*(kierunek%4==3),poczateky-(i+1)*(kierunek%4==0)+(i+1)*(kierunek%4==2)])
             for i in targets:
                 if temp == True:
                     if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
@@ -1143,19 +1091,8 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             temp = False
         case "prisma_barrel": #zasieg 5 na wprzod , 3 obr , wszystkie cele
             for i in range(5):
-                match kierunek:
-                    case 0:
-                        targets.append([poczatekx,poczateky-i-1])
-                        Laser(poczatekx,poczateky-i-1,kierunek)
-                    case 1:
-                        targets.append([poczatekx+i+1,poczateky])
-                        Laser(poczatekx+i+1,poczateky,kierunek)
-                    case 2:
-                        targets.append([poczatekx,poczateky+i+1])
-                        Laser(poczatekx,poczateky+i+1,kierunek)
-                    case 3:
-                        targets.append([poczatekx-i-1,poczateky])
-                        Laser(poczatekx-i-1,poczateky,kierunek)
+                targets.append([poczatekx+(i+1)*(kierunek%4==1)-(i+1)*(kierunek%4==3),poczateky-(i+1)*(kierunek%4==0)+(i+1)*(kierunek%4==2)])
+                Laser(poczatekx+(i+1)*(kierunek%4==1)-(i+1)*(kierunek%4==3),poczateky-(i+1)*(kierunek%4==0)+(i+1)*(kierunek%4==2),kierunek)
     
             for i in targets:
                 if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
@@ -1167,26 +1104,10 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                     if obj.x == i[0] and obj.y == i[1]:
                         obj.zadaj_obrazenia(3)
         case "bubble_barrel": #zasieg 5 na wprzod , 2 obr, pierwszy cel
-            match kierunek:
-                case 0:
-                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
-                case 1:
-                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
-                case 2:
-                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
-                case 3:
-                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
+            Barrel_smoke(poczatekx-(kierunek%4==3)+(kierunek%4==1),poczateky-(kierunek%4==0)+(kierunek%4==2),kierunek)
             temp = True
             for i in range(5):
-                match kierunek:
-                    case 0:
-                        targets.append([poczatekx,poczateky-i-1])
-                    case 1:
-                        targets.append([poczatekx+i+1,poczateky])
-                    case 2:
-                        targets.append([poczatekx,poczateky+i+1])
-                    case 3:
-                        targets.append([poczatekx-i-1,poczateky])
+                targets.append([poczatekx+(i+1)*(kierunek%4==1)-(i+1)*(kierunek%4==3),poczateky-(i+1)*(kierunek%4==0)+(i+1)*(kierunek%4==2)])
             for i in targets:
                 if temp == True:
                     if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
@@ -1201,26 +1122,10 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             obj.zadaj_obrazenia(2)
                             temp = False
         case "cow_barrel": #zasieg 3 na wprzod , 7 obr, pierwszy cel
-            match kierunek:
-                case 0:
-                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
-                case 1:
-                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
-                case 2:
-                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
-                case 3:
-                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
+            Barrel_smoke(poczatekx-(kierunek%4==3)+(kierunek%4==1),poczateky-(kierunek%4==0)+(kierunek%4==2),kierunek)
             temp = True
             for i in range(3):
-                match kierunek:
-                    case 0:
-                        targets.append([poczatekx,poczateky-i-1])
-                    case 1:
-                        targets.append([poczatekx+i+1,poczateky])
-                    case 2:
-                        targets.append([poczatekx,poczateky+i+1])
-                    case 3:
-                        targets.append([poczatekx-i-1,poczateky])
+                targets.append([poczatekx+(i+1)*(kierunek%4==1)-(i+1)*(kierunek%4==3),poczateky-(i+1)*(kierunek%4==0)+(i+1)*(kierunek%4==2)])
             for i in targets:
                 if temp == True:
                     if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
@@ -1235,15 +1140,7 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             obj.zadaj_obrazenia(7)
                             temp = False
         case "shotgun_barrel": #zasieg prostokat 3x2 na wprzod, 5 obr, wszystkie cele
-            match kierunek:
-                case 0:
-                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
-                case 1:
-                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
-                case 2:
-                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
-                case 3:
-                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
+            Barrel_smoke(poczatekx-(kierunek%4==3)+(kierunek%4==1),poczateky-(kierunek%4==0)+(kierunek%4==2),kierunek)
             for i in range(2):
                 match kierunek:
                     case 0:
@@ -1272,26 +1169,10 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                         if obj.x == i[0] and obj.y == i[1]:
                             obj.zadaj_obrazenia(5)
         case "chain_barrel": #zasieg 4 na wprzod , 2 obr, pierwszy cel
-            match kierunek:
-                case 0:
-                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
-                case 1:
-                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
-                case 2:
-                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
-                case 3:
-                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
+            Barrel_smoke(poczatekx-(kierunek%4==3)+(kierunek%4==1),poczateky-(kierunek%4==0)+(kierunek%4==2),kierunek)
             temp = True
             for i in range(4):
-                match kierunek:
-                    case 0:
-                        targets.append([poczatekx,poczateky-i-1])
-                    case 1:
-                        targets.append([poczatekx+i+1,poczateky])
-                    case 2:
-                        targets.append([poczatekx,poczateky+i+1])
-                    case 3:
-                        targets.append([poczatekx-i-1,poczateky])
+                targets.append([poczatekx+(i+1)*(kierunek%4==1)-(i+1)*(kierunek%4==3),poczateky-(i+1)*(kierunek%4==0)+(i+1)*(kierunek%4==2)])
             for i in targets:
                 if temp == True:
                     if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
@@ -1306,25 +1187,9 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             obj.zadaj_obrazenia(2)
                             temp = False
         case "sword_barrel": #zaieg 1 na wprzod, 15 obr, pierwszy cel
-            match kierunek:
-                case 0:
-                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
-                case 1:
-                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
-                case 2:
-                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
-                case 3:
-                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
+            Barrel_smoke(poczatekx-(kierunek%4==3)+(kierunek%4==1),poczateky-(kierunek%4==0)+(kierunek%4==2),kierunek)
             temp = True
-            match kierunek:
-                case 0:
-                    targets.append([poczatekx,poczateky-1])
-                case 1:
-                    targets.append([poczatekx+1,poczateky])
-                case 2:
-                    targets.append([poczatekx,poczateky+1])
-                case 3:
-                    targets.append([poczatekx-1,poczateky])
+            targets.append([poczatekx+(1)*(kierunek%4==1)-(1)*(kierunek%4==3),poczateky-(1)*(kierunek%4==0)+(1)*(kierunek%4==2)])
             for i in targets:
                 if temp == True:
                     if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
@@ -1339,26 +1204,10 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             obj.zadaj_obrazenia(15)
                             temp = False
         case "lego_barrel": #zaieg 8 na wprzod, 3 obr, pierwszy cel
-            match kierunek:
-                case 0:
-                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
-                case 1:
-                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
-                case 2:
-                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
-                case 3:
-                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
+            Barrel_smoke(poczatekx-(kierunek%4==3)+(kierunek%4==1),poczateky-(kierunek%4==0)+(kierunek%4==2),kierunek)
             temp = True
             for i in range(8):
-                match kierunek:
-                    case 0:
-                        targets.append([poczatekx,poczateky-i-1])
-                    case 1:
-                        targets.append([poczatekx+i+1,poczateky])
-                    case 2:
-                        targets.append([poczatekx,poczateky+i+1])
-                    case 3:
-                        targets.append([poczatekx-i-1,poczateky])
+               targets.append([poczatekx+(i+1)*(kierunek%4==1)-(i+1)*(kierunek%4==3),poczateky-(i+1)*(kierunek%4==0)+(i+1)*(kierunek%4==2)])
             for i in targets:
                 if temp == True:
                     if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
@@ -1373,26 +1222,10 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                             obj.zadaj_obrazenia(3)
                             temp = False
         case "golden_barrel": #zaieg 4 na wprzod, 8 obr, pierwszy cel
-            match kierunek:
-                case 0:
-                    Barrel_smoke(poczatekx,poczateky-1,kierunek)
-                case 1:
-                    Barrel_smoke(poczatekx+1,poczateky,kierunek)
-                case 2:
-                    Barrel_smoke(poczatekx,poczateky+1,kierunek)
-                case 3:
-                    Barrel_smoke(poczatekx-1,poczateky,kierunek)
+            Barrel_smoke(poczatekx-(kierunek%4==3)+(kierunek%4==1),poczateky-(kierunek%4==0)+(kierunek%4==2),kierunek)
             temp = True
             for i in range(4):
-                match kierunek:
-                    case 0:
-                        targets.append([poczatekx,poczateky-i-1])
-                    case 1:
-                        targets.append([poczatekx+i+1,poczateky])
-                    case 2:
-                        targets.append([poczatekx,poczateky+i+1])
-                    case 3:
-                        targets.append([poczatekx-i-1,poczateky])
+                targets.append([poczatekx+(i+1)*(kierunek%4==1)-(i+1)*(kierunek%4==3),poczateky-(i+1)*(kierunek%4==0)+(i+1)*(kierunek%4==2)])
             for i in targets:
                 if temp == True:
                     if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
@@ -1488,13 +1321,13 @@ def uzycie_karty(nazwa):
             Laser(obiekt_gracz.x,obiekt_gracz.y+1,0)
             for i in targets:
                 if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
-                    obiekt_gracz.zadaj_obrazenia(5)
+                    obiekt_gracz.zadaj_obrazenia(10)
                 for obj in przeciwnicy_arr:
                     if obj.x == i[0] and obj.y ==i[1]:
-                        obj.zadaj_obrazenia(5)
+                        obj.zadaj_obrazenia(10)
                 for obj in przeszkody_arr:
                     if obj.x == i[0] and obj.y == i[1]:
-                        obj.zadaj_obrazenia(5)
+                        obj.zadaj_obrazenia(10)
         case "10":
             targets = []
             targets.append([obiekt_gracz.x+1,obiekt_gracz.y+1])
@@ -1503,13 +1336,13 @@ def uzycie_karty(nazwa):
             targets.append([obiekt_gracz.x+1,obiekt_gracz.y-1])
             for i in targets:
                 if obiekt_gracz.x == i[0] and obiekt_gracz.y == i[1]:
-                    obiekt_gracz.zadaj_obrazenia(5)
+                    obiekt_gracz.zadaj_obrazenia(10)
                 for obj in przeciwnicy_arr:
                     if obj.x == i[0] and obj.y ==i[1]:
-                        obj.zadaj_obrazenia(5)
+                        obj.zadaj_obrazenia(10)
                 for obj in przeszkody_arr:
                     if obj.x == i[0] and obj.y == i[1]:
-                        obj.zadaj_obrazenia(5)
+                        obj.zadaj_obrazenia(10)
         
             
 def Gadzet(nazwa):
@@ -1596,10 +1429,10 @@ def nowy_poziom():
         obiekt_gracz.hp = obiekt_gracz.maxhp #ustawia hp na max hp
     if poziom < 10:
         przeszkody_arr = [przeszkody(-1,-1,random.randint(0,2)) for i in range(10 + poziom *2)]
-        przeciwnicy_arr = [przeciwnik(-1,-1) for i in range(5 + math.floor(poziom/2))]
+        przeciwnicy_arr = [przeciwnik(-1,-1,3) for i in range(5 + math.floor(poziom/2))]
     else:
         przeszkody_arr = [przeszkody(-1,-1,random.randint(0,2)) for i in range(30)]
-        przeciwnicy_arr = [przeciwnik(-1,-1) for i in range(10)]
+        przeciwnicy_arr = [przeciwnik(-1,-1,3) for i in range(10)]
     for obj in przeszkody_arr:
         temp = True
         while(temp):
@@ -1714,6 +1547,291 @@ def Rysowanie_sklepu():
         bought_items_counter =0
         nowy_poziom()
 
+def tutorial_rysowanie():
+    global tutorial_step
+    global obiekt_gracz
+    global tutorial_var
+    global przeszkody_arr
+    global przeciwnicy_arr
+    global menu_eq
+    global tutorial
+    global poziom
+    global start_menu
+    pr.clear_background(pr.WHITE)
+    RysowaniePlanszy()
+    RysowanieUi()
+    pr.draw_rectangle(660,0,300,200,pr.GRAY)
+    match tutorial_step:
+        case 0:
+            pr.draw_text("witaj w tutorialu",660,32*0,32,pr.WHITE)
+            pr.draw_text("nauczy cie on",660,32,32,pr.WHITE)
+            pr.draw_text("sterowania tej gry",660,32*2,32,pr.WHITE)
+            pr.draw_text("przycisk P konczy",660,32*3,32,pr.WHITE)
+            pr.draw_text("ture, wcisnij go",660,32*4,32,pr.WHITE)
+            pr.draw_text("zeby przejsc dalej",660,32*5,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_P)):
+                tutorial_step+=1
+        case 1:
+            pr.draw_text("przyciski A i D",660,32*0,32,pr.WHITE)
+            pr.draw_text("odpowiadaja za",660,32*1,32,pr.WHITE)
+            pr.draw_text("obracanie gracza",660,32*2,32,pr.WHITE)
+            pr.draw_text("nacisnij D zeby",660,32*3,32,pr.WHITE)
+            pr.draw_text("obrocic gracza w",660,32*4,32,pr.WHITE)
+            pr.draw_text("prawo",660,32*5,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_D)):
+                tutorial_step +=1
+                Poruszanie_gracza(3)
+        case 2:
+            pr.draw_text("jeszcze raz wcisnij",660,32*0,32,pr.WHITE)
+            pr.draw_text("D zeby obrocic",660,32*1,32,pr.WHITE)
+            pr.draw_text("gracza w prawo",660,32*2,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_D)):
+                tutorial_step +=1
+                Poruszanie_gracza(3)
+        case 3:
+            pr.draw_text("teraz nacisnij",660,32*0,32,pr.WHITE)
+            pr.draw_text("A zeby obrocic",660,32*1,32,pr.WHITE)
+            pr.draw_text("gracza w lewo",660,32*2,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_A)):
+                tutorial_step +=1
+                Poruszanie_gracza(4)
+        case 4:
+            pr.draw_text("teraz nacisnij W",660,32*0,32,pr.WHITE)
+            pr.draw_text("zeby poruszyc",660,32*1,32,pr.WHITE)
+            pr.draw_text("gracza na wprost",660,32*2,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_W)):
+                tutorial_step +=1
+                Poruszanie_gracza(0)
+        case 5:
+            pr.draw_text("teraz nacisnij S",660,32*0,32,pr.WHITE)
+            pr.draw_text("zeby poruszyc",660,32*1,32,pr.WHITE)
+            pr.draw_text("gracza do tylu",660,32*2,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_S)):
+                tutorial_step +=1
+                Poruszanie_gracza(5)
+        case 6:
+            pr.draw_text("Po prawej stronie",660,32*0,32,pr.WHITE)
+            pr.draw_text("znajduje sie ui",660,32*1,32,pr.WHITE)
+            pr.draw_text("po urzyciu",660,32*2,32,pr.WHITE)
+            pr.draw_text("ruchow energia",660,32*3,32,pr.WHITE)
+            pr.draw_text("zostaje zurzyta",660,32*4,32,pr.WHITE)
+            pr.draw_text("wcisnij P",660,32*5,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_P)):
+                tutorial_step+=1
+                Kolejna_Tura()
+        case 7:
+            pr.draw_text("skonczenie tury",660,32*0,32,pr.WHITE)
+            pr.draw_text("odnawia energie",660,32*1,32,pr.WHITE)
+            pr.draw_text("wcisnij P ",660,32*2,32,pr.WHITE)
+            pr.draw_text("jeszcze raz",660,32*3,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_P)):
+                tutorial_step+=1
+                Kolejna_Tura()
+        case 8:
+            pr.draw_text("Przyciski Q i E",660,32*0,32,pr.WHITE)
+            pr.draw_text("oddpowiadaja za",660,32*1,32,pr.WHITE)
+            pr.draw_text("dashe, kosztuja",660,32*2,32,pr.WHITE)
+            pr.draw_text("one dwie energie",660,32*3,32,pr.WHITE)
+            pr.draw_text("wcisnij E",660,32*4,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_E)):
+                tutorial_step+=1
+                Poruszanie_gracza(1)
+        case 9:
+            pr.draw_text("wcisnij Q",660,32*0,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_Q)):
+                tutorial_step+=1
+                Poruszanie_gracza(2)
+                tutorial_var = True
+        case 10:
+            if (tutorial_var == True):
+                print("ballss")
+                tutorial_var = False
+                przeszkody_arr = [przeszkody(3,0,0)]
+            pr.draw_text("w grze wystepuja",660,32*0,32,pr.WHITE)
+            pr.draw_text("przeszkody ktore",660,32*1,32,pr.WHITE)
+            pr.draw_text("da sie zniszczyc",660,32*2,32,pr.WHITE)
+            pr.draw_text("nacisnij P",660,32*3,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_P)):
+                tutorial_step+=1
+                Kolejna_Tura()
+        case 11:
+            pr.draw_text("najezdzajac",660,32*0,32,pr.WHITE)
+            pr.draw_text("myszka na cos",660,32*1,32,pr.WHITE)
+            pr.draw_text("wyswietli sie ile",660,32*2,32,pr.WHITE)
+            pr.draw_text("to cos ma hp",660,32*3,32,pr.WHITE)
+            pr.draw_text("nacisnij P",660,32*4,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_P)):
+                tutorial_step+=1
+                Kolejna_Tura()
+        case 12:
+            pr.draw_text("przeciwnikow i",660,32*0,32,pr.WHITE)
+            pr.draw_text("przeszkody da",660,32*1,32,pr.WHITE)
+            pr.draw_text("sie zniszczyc",660,32*2,32,pr.WHITE)
+            pr.draw_text("strzelajac do nich",660,32*3,32,pr.WHITE)
+            pr.draw_text("nacisnij spacje",660,32*4,32,pr.WHITE)
+            pr.draw_text("aby strzelic",660,32*5,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_SPACE)):
+                tutorial_step+=1
+                obiekt_gracz.strzel()
+        case 13:
+            pr.draw_text("jeszcze raz",660,32*0,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_SPACE)):
+                tutorial_step+=1
+                obiekt_gracz.strzel()
+        case 14:
+            pr.draw_text("nie masz energi",660,32*0,32,pr.WHITE)
+            pr.draw_text("na kolejny strzal",660,32*1,32,pr.WHITE)
+            pr.draw_text("skoncz ture",660,32*2,32,pr.WHITE)
+            pr.draw_text("naciskajac P",660,32*3,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_P)):
+                tutorial_step+=1
+                Kolejna_Tura()
+        case 15:
+            pr.draw_text("jeszcze raz",660,32*0,32,pr.WHITE)
+            pr.draw_text("strzel",660,32*1,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_SPACE)):
+                tutorial_step+=1
+                obiekt_gracz.strzel()
+        case 16:
+            pr.draw_text("wciskajac M",660,32*0,32,pr.WHITE)
+            pr.draw_text("mozna otworzyc",660,32*1,32,pr.WHITE)
+            pr.draw_text("menu w ktorym",660,32*2,32,pr.WHITE)
+            pr.draw_text("mozna zmieniac",660,32*3,32,pr.WHITE)
+            pr.draw_text("bronie gadzety",660,32*4,32,pr.WHITE)
+            pr.draw_text("wcisnij P",660,32*5,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_P)):
+                tutorial_step+=1
+        case 17:
+            pr.draw_text("i karty",660,32*0,32,pr.WHITE)
+            pr.draw_text("otwoz menu za",660,32*1,32,pr.WHITE)
+            pr.draw_text("pomoca M",660,32*2,32,pr.WHITE)
+            pr.draw_text("i zmien bron na",660,32*3,32,pr.WHITE)
+            pr.draw_text("droga",660,32*4,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_M)):
+                if menu_eq== False:
+                    menu_eq = True
+                else:
+                    menu_eq = False
+            if(obiekt_gracz.aktualna_bron == "normal_barrel"):
+                tutorial_var = True
+                tutorial_step+=1
+        case 18:
+            if (tutorial_var):
+                tutorial_var = False
+                obiekt_gracz.posiadane_gadzety.append("sound_wave")
+            pr.draw_text("wyekwipuj gadzet",660,32*0,32,pr.WHITE)
+            pr.draw_text("sound_wave",660,32*1,32,pr.WHITE)
+            pr.draw_text("wciskajac na niego",660,32*2,32,pr.WHITE)
+            if(obiekt_gracz.aktualny_gadzet == "sound_wave"):
+                tutorial_step+=1
+        case 19:
+            pr.draw_text("zeby wyjsc z",660,32*0,32,pr.WHITE)
+            pr.draw_text("menu wcisnij",660,32*1,32,pr.WHITE)
+            pr.draw_text("M",660,32*2,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_M)):
+                if menu_eq== False:
+                    menu_eq = True
+                else:
+                    menu_eq = False
+            if(menu_eq == False):
+                tutorial_step+=1
+        case 20:
+            obiekt_gracz.x = 0 #na wszelki wypadek
+            obiekt_gracz.y = 0 #na wszelki wypadek
+            przeszkody_arr = [przeszkody(1,0,0),przeszkody(0,1,0),przeszkody(1,1,2),przeszkody(2,0,2),przeszkody(0,2,2),przeszkody(2,1,2),przeszkody(1,2,2),przeszkody(2,2,2)]
+            pr.draw_text("zeby urzyc gadzetu",660,32*0,32,pr.WHITE)
+            pr.draw_text("wcisnij G",660,32*1,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_G)): 
+                obiekt_gracz.uzycie_gadzetu()
+                tutorial_step+=1
+        case 21:
+            pr.draw_text("otwoz menu za",660,32*0,32,pr.WHITE)
+            pr.draw_text("pomoca M",660,32*1,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_M)):
+                if menu_eq== False:
+                    menu_eq = True
+                else:
+                    menu_eq = False
+            if(menu_eq):
+                tutorial_step+=1
+                tutorial_var = True
+        case 22:
+            if(tutorial_var):
+                tutorial_var = False
+                obiekt_gracz.posiadane_karty = ["9"]
+            pr.draw_text("uszyj karty",660,32*0,32,pr.WHITE)
+            pr.draw_text("wciskajac ja",660,32*1,32,pr.WHITE)
+            if obiekt_gracz.posiadane_karty == [] :
+                tutorial_step+=1
+        case 23:
+            pr.draw_text("wyjdz z menu za",660,32*0,32,pr.WHITE)
+            pr.draw_text("pomoca M",660,32*1,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_M)):
+                if menu_eq== False:
+                    menu_eq = True
+                else:
+                    menu_eq = False
+            if(menu_eq==False):
+                tutorial_step+=1
+        case 24:
+            pr.draw_text("po prawej strone",660,32*0,32,pr.WHITE)
+            pr.draw_text("na pasku sa",660,32*1,32,pr.WHITE)
+            pr.draw_text("rozne zmienne",660,32*2,32,pr.WHITE)
+            pr.draw_text("pokazanie dla gracza",660,32*3,32,pr.WHITE)
+            pr.draw_text("nacisnij P",660,32*4,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_P)):
+                tutorial_step+=1
+                Kolejna_Tura()
+        case 25:
+            pr.draw_text("zaznaczony kolorem",660,32*0,32,pr.WHITE)
+            pr.draw_text("niebieskim jest",660,32*1,32,pr.WHITE)
+            pr.draw_text("licznik poziomow",660,32*2,32,pr.WHITE)
+            pr.draw_text("nacisnij P",660,32*3,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_P)):
+                tutorial_step+=1
+                Kolejna_Tura()
+        case 26:
+            pr.draw_text("zaznaczony kolorem",660,32*0,32,pr.WHITE)
+            pr.draw_text("zoltym jest",660,32*1,32,pr.WHITE)
+            pr.draw_text("licznik pieniedzy",660,32*2,32,pr.WHITE)
+            pr.draw_text("nacisnij P",660,32*3,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_P)):
+                tutorial_step+=1
+                Kolejna_Tura()
+        case 27:
+            pr.draw_text("zaznaczony kolorem",660,32*0,32,pr.WHITE)
+            pr.draw_text("czerwonym jest",660,32*1,32,pr.WHITE)
+            pr.draw_text("licznik hi i maxhp",660,32*2,32,pr.WHITE)
+            pr.draw_text("nacisnij P",660,32*3,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_P)):
+                tutorial_step+=1
+                Kolejna_Tura()
+        case 28:
+            pr.draw_text("i to tyle",660,32*0,32,pr.WHITE)
+            pr.draw_text("kazdej broni nie",660,32*1,32,pr.WHITE)
+            pr.draw_text("bede tlumaczyl",660,32*2,32,pr.WHITE)
+            pr.draw_text("bo dlugo by to trwalo",660,32*3,32,pr.WHITE)
+            pr.draw_text("nacisnij p",660,32*4,32,pr.WHITE)
+            pr.draw_text("zeby przejsc do menu",660,32*5,32,pr.WHITE)
+            if(pr.is_key_pressed(pr.KEY_P)):
+                tutorial_step =0
+                tutorial = False
+                obiekt_gracz = gracz(-1,-1) 
+                poziom = 0
+                start_menu = True
+
+
+
+    
+
+
+
+            
+        
+
+
+
+
 
 
 nowy_poziom()
@@ -1724,6 +1842,8 @@ while not pr.window_should_close():
         Rysowanie_menu_restartu()
     elif(shop_screen == True):
         Rysowanie_sklepu()
+    elif(tutorial == True):
+        tutorial_rysowanie()
     else:
         if(pr.is_key_pressed(pr.KEY_W) and menu_eq==False): #jazda na wprost
             Poruszanie_gracza(0)
@@ -1754,7 +1874,7 @@ while not pr.window_should_close():
         RysowaniePlanszy()
         RysowanieUi()
         if(przeciwnicy_arr ==[]): #jezeli wszyscy przeciwnicy zostali pokonani
-            if (poziom %5==0):
+            if (poziom %5==0 and poziom != 0):
                 shop_screen = True
             else:
                 nowy_poziom()
