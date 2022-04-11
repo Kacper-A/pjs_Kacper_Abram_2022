@@ -1,7 +1,3 @@
-#todo:
-
-
-from asyncio.windows_events import NULL
 import math
 import random
 import pyray as pr #pyray to jakas inna biblioteka ale chodzi o "raylib", niewiem czemu w pythonie nazywa sie pyray zamiast raylib
@@ -13,18 +9,18 @@ pr.set_target_fps(60)
 
 Plansza =[[0 for x in range(15)] for y in range(15)] #plansza 15x15 glownie uzywania do trawy
 menu_eq = False #zmienna ktora pokazuje ze jest sie w menu
-restart_screen = False
-shop_screen = False
+restart_screen = False #zmienna ktora pokazuje czy pokazywac ekran restartu
+shop_screen = False #zmienna ktora pokazuje czy pokazywac ekran sklepu
 PlayerTurn=True #zmienna ktora pokazuje ze jest tura gracza
 start_menu = True #zmienna ktora pozazuje czy gracz jest w menu startowym gdzie jest przycisk start czy cos?
-tutorial = False
-tutorial_step = 0
+tutorial = False #zmienna ktora pokazuje czy pokazywac tutorial
+tutorial_step = 0 #zmienna ktora pokazuje w jakiej czesci tutorialu gracz jest
 poziom = 0 #poziom na jakim aktualnie jest gracz
 level_shift_animation = 0 #0 - brak animacii 90 - poczatek animacii (1.5 sek powinna trwac animacja)
 koszty_strzalu = {"railgun_barrel":3,"normal_barrel":3,"prisma_barrel":4,"bubble_barrel":2,"cow_barrel":3,"shotgun_barrel":6,"chain_barrel":1,"sword_barrel":5,"lego_barrel":3,"golden_barrel":6}
 koszty_gadzetow = {"sand_bag":1,"rocket_luncher":2,"sound_wave":1,"battery":0,"medkit":0}
-bought_items_counter =0
-tutorial_var = False
+bought_items_counter =0 #z kazdym kupionym przedmiotem w danym sklepie cena bedzie wzrastala
+tutorial_var = False #tymczasowa zmienna zeby niektore czynnosci wykonywaly sie tylko raz
 
 pr.init_audio_device()
 class gracz:
@@ -34,13 +30,13 @@ class gracz:
         self.maxenergii = 8 #maxymalna energia jaka gracz moze posiadac
         self.aktualnaenergia = 8 #aktualna energia potrzebna do wykonywania czynnosci takich jak poruszanie sie, strzelanie czy zmienianie broni
         self.obrot = 0 #obrot gracza od 0 do 3 
-        self.hp = 50
-        self.maxhp = 50
+        self.hp = 50 #aktualne hp gracza
+        self.maxhp = 50 #maksymalne hp gracza
         self.posiadane_bronie = ["railgun_barrel","normal_barrel","prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"] #lista posiadanych barreli przez gracza   ,"prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"
         self.posiadane_gadzety = [] #"sand_bag","rocket_luncher","sound_wave","battery","medkit"
-        self.posiadane_karty = []
+        self.posiadane_karty = ["9","2","3"]
         self.aktualna_bron = "railgun_barrel" #jaka jest aktualna bron zalozona przez gracza
-        self.aktualny_gadzet = ""
+        self.aktualny_gadzet = "" #jaki jest aktualny gadzet zalozony przez gracza
         self.animacja = 0 #0 to koniec/brak animacji 16 to poczatek
         self.money = 100 #pieniądze używane do kupowania w sklepie
     def narysuj(self):
@@ -60,12 +56,12 @@ class gracz:
     def zadaj_obrazenia(self,obrazenia):
         self.hp -= obrazenia
         if (self.hp <=0):
-            temp = Explosion(self.x,self.y)
+            Explosion(self.x,self.y)
             pr.play_sound(destroy_audio)
             global restart_screen
             restart_screen = True
         else:
-            temp = Damage(self.x,self.y)
+            Damage(self.x,self.y)
             pr.play_sound(hit_audio)
     def uzycie_gadzetu(self):
         if self.aktualny_gadzet in koszty_gadzetow:
@@ -101,19 +97,19 @@ class przeszkody:
     def zadaj_obrazenia(self,obrazenia):
         self.hp -= obrazenia 
         if (self.hp <=0):
-            temp = Explosion(self.x,self.y)
+            Explosion(self.x,self.y)
             pr.play_sound(destroy_audio)
             przeszkody_arr.remove(self)
         else:
-            temp = Damage(self.x,self.y)
+            Damage(self.x,self.y)
             pr.play_sound(hit_audio)
 
 class trawa:
     def __init__(self,posx,posy):
         self.x=posx
         self.y=posy
-        temp = random.randint(0,2)
-        match temp:
+        losowa = random.randint(0,2)
+        match losowa:
             case 0:
                 self.sprite = trawa_tile1
             case 1:
@@ -140,13 +136,13 @@ class przeciwnik:
     def zadaj_obrazenia(self,obrazenia):
         self.hp -= obrazenia
         if (self.hp <=0): #jezeli hp jest mniejsze rowne 0
-            temp = Explosion(self.x,self.y) #twozy nowy obiekt "temp" klasy Explosion w miejscu czolgu
+            Explosion(self.x,self.y) #twozy nowy obiekt klasy Explosion w miejscu czolgu
             global obiekt_gracz #tylko po to by dodac pieniadze linijke nizej
             obiekt_gracz.money += random.randint(10,30) #jak przeciwnik zostaje zniszczony do pieniędzy gracza zostaje dodane od 10 do 30 pieniędzy włącznie
             pr.play_sound(destroy_audio)
             przeciwnicy_arr.remove(self) #usuwa sie z listy
         else:
-            temp = Damage(self.x,self.y)
+            Damage(self.x,self.y)
             pr.play_sound(hit_audio)
     def tura_przeciwnika(self): #https://www.youtube.com/watch?v=8SigT_jhz4I - tutorial z jakiego kozystalem do pathfindingu 
         czy_strzelono = False #czolg nie poruszy sie w tej tuze gdy strzeli, nie wazne czy to 1 czy 2 czy 3 ruch
@@ -632,29 +628,8 @@ def RysowaniePlanszy():
         obj.narysuj()
 
 def Rysowanie_karty(numer_karty,x,y,rotacja,skala):
-    match numer_karty:
-        case "tyl":
-            pr.draw_texture_ex(tyl_karty_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
-        case "1":
-            pr.draw_texture_ex(karta1_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
-        case "2":
-            pr.draw_texture_ex(karta2_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
-        case "3":
-            pr.draw_texture_ex(karta3_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
-        case "4":
-            pr.draw_texture_ex(karta4_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
-        case "5":
-            pr.draw_texture_ex(karta5_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
-        case "6":
-            pr.draw_texture_ex(karta6_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
-        case "7":
-            pr.draw_texture_ex(karta7_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
-        case "8":
-            pr.draw_texture_ex(karta8_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
-        case "9":
-            pr.draw_texture_ex(karta9_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
-        case "10":
-            pr.draw_texture_ex(karta10_sprite,pr.Vector2(x,y),rotacja,skala,pr.WHITE)
+    karty_dict = {"tyl":tyl_karty_sprite,"1":karta1_sprite,"2":karta2_sprite,"3":karta3_sprite,"4":karta4_sprite,"5":karta5_sprite,"6":karta6_sprite,"7":karta7_sprite,"8":karta8_sprite,"9":karta9_sprite,"10":karta10_sprite}
+    pr.draw_texture_ex(karty_dict[numer_karty],pr.Vector2(x,y),rotacja,skala,pr.WHITE)
 
 
 def RysowanieUi():
@@ -966,22 +941,22 @@ def Poruszanie_gracza(tryb):
                             if(CzyJestobiekt(obiekt_gracz.x+1,obiekt_gracz.y)==False and obiekt_gracz.x<14):
                                 obiekt_gracz.aktualnaenergia-=2
                                 obiekt_gracz.x+=1
-                                temp = dash_smoke(obiekt_gracz.x -1,obiekt_gracz.y,obiekt_gracz.obrot)
+                                dash_smoke(obiekt_gracz.x -1,obiekt_gracz.y,obiekt_gracz.obrot)
                         case 1:
                             if(CzyJestobiekt(obiekt_gracz.x,obiekt_gracz.y+1)==False and obiekt_gracz.y<14):
                                 obiekt_gracz.aktualnaenergia-=2
                                 obiekt_gracz.y+=1
-                                temp = dash_smoke(obiekt_gracz.x ,obiekt_gracz.y -1,obiekt_gracz.obrot)
+                                dash_smoke(obiekt_gracz.x ,obiekt_gracz.y -1,obiekt_gracz.obrot)
                         case 2:
                             if(CzyJestobiekt(obiekt_gracz.x-1,obiekt_gracz.y)==False and obiekt_gracz.x>0):
                                 obiekt_gracz.aktualnaenergia-=2
                                 obiekt_gracz.x-=1
-                                temp = dash_smoke(obiekt_gracz.x+1,obiekt_gracz.y,obiekt_gracz.obrot)
+                                dash_smoke(obiekt_gracz.x+1,obiekt_gracz.y,obiekt_gracz.obrot)
                         case 3:
                             if(CzyJestobiekt(obiekt_gracz.x,obiekt_gracz.y-1)==False and obiekt_gracz.y>0):
                                 obiekt_gracz.aktualnaenergia-=2
                                 obiekt_gracz.y-=1
-                                temp = dash_smoke(obiekt_gracz.x ,obiekt_gracz.y+1,obiekt_gracz.obrot)
+                                dash_smoke(obiekt_gracz.x ,obiekt_gracz.y+1,obiekt_gracz.obrot)
             case 2:#dash w lewo
                 if(obiekt_gracz.aktualnaenergia>1):
                     match obiekt_gracz.obrot:
@@ -989,22 +964,22 @@ def Poruszanie_gracza(tryb):
                             if(CzyJestobiekt(obiekt_gracz.x-1,obiekt_gracz.y)==False and obiekt_gracz.x>0):
                                 obiekt_gracz.aktualnaenergia-=2
                                 obiekt_gracz.x-=1
-                                temp = dash_smoke(obiekt_gracz.x +1,obiekt_gracz.y,obiekt_gracz.obrot-2)
+                                dash_smoke(obiekt_gracz.x +1,obiekt_gracz.y,obiekt_gracz.obrot-2)
                         case 1:
                             if(CzyJestobiekt(obiekt_gracz.x,obiekt_gracz.y-1)==False and obiekt_gracz.y>0):
                                 obiekt_gracz.aktualnaenergia-=2
                                 obiekt_gracz.y-=1
-                                temp = dash_smoke(obiekt_gracz.x ,obiekt_gracz.y+1,obiekt_gracz.obrot-2)
+                                dash_smoke(obiekt_gracz.x ,obiekt_gracz.y+1,obiekt_gracz.obrot-2)
                         case 2:
                             if(CzyJestobiekt(obiekt_gracz.x+1,obiekt_gracz.y)==False and obiekt_gracz.x<14):
                                 obiekt_gracz.aktualnaenergia-=2
                                 obiekt_gracz.x+=1
-                                temp = dash_smoke(obiekt_gracz.x -1,obiekt_gracz.y,obiekt_gracz.obrot-2)
+                                dash_smoke(obiekt_gracz.x -1,obiekt_gracz.y,obiekt_gracz.obrot-2)
                         case 3:
                             if(CzyJestobiekt(obiekt_gracz.x,obiekt_gracz.y+1)==False and obiekt_gracz.y<14):
                                 obiekt_gracz.aktualnaenergia-=2
                                 obiekt_gracz.y+=1
-                                temp = dash_smoke(obiekt_gracz.x ,obiekt_gracz.y-1,obiekt_gracz.obrot-2)
+                                dash_smoke(obiekt_gracz.x ,obiekt_gracz.y-1,obiekt_gracz.obrot-2)
             case 3: #obrot w prawo
                 obiekt_gracz.aktualnaenergia-=1
                 obiekt_gracz.obrot+=1
@@ -1423,8 +1398,7 @@ def nowy_poziom():
     obiekt_gracz.x = -1 #zmienia lokacje gracza na taka poza plansza zeby nie przeszkadzal w rozmieszczaniu przeszkod i przeciwnikow
     obiekt_gracz.y = -1
     obiekt_gracz.aktualnaenergia = obiekt_gracz.maxenergii #odnawia energie na poczatku nowego poziomu
-    temp = math.floor(obiekt_gracz.maxhp/10) #10% max hp gracza
-    obiekt_gracz.hp += temp #odnawia hp gracza o te 10% maxhp co wyrzej bylo policzone
+    obiekt_gracz.hp += math.floor(obiekt_gracz.maxhp/10) #odnawia hp gracza o 10% maxhp na poczatku nowego poziomu
     if (obiekt_gracz.hp > obiekt_gracz.maxhp): #jezeli gracz ma wiecej hp niz maxhp
         obiekt_gracz.hp = obiekt_gracz.maxhp #ustawia hp na max hp
     if poziom < 10:
