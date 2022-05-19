@@ -7,7 +7,6 @@ from pathfinding.finder.a_star import AStarFinder
 pr.init_window(1024,960,"cholg")
 pr.set_target_fps(60) 
 
-Plansza =[[0 for x in range(15)] for y in range(15)] #plansza 15x15 glownie uzywania do trawy
 menu_eq = False #zmienna ktora pokazuje ze jest sie w menu
 restart_screen = False #zmienna ktora pokazuje czy pokazywac ekran restartu
 shop_screen = False #zmienna ktora pokazuje czy pokazywac ekran sklepu
@@ -32,9 +31,9 @@ class gracz:
         self.obrot = 0 #obrot gracza od 0 do 3 
         self.hp = 50 #aktualne hp gracza
         self.maxhp = 50 #maksymalne hp gracza
-        self.posiadane_bronie = ["railgun_barrel","normal_barrel","prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"] #lista posiadanych barreli przez gracza   ,"prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"
+        self.posiadane_bronie = ["railgun_barrel","normal_barrel"] #lista posiadanych barreli przez gracza   ,"prisma_barrel","bubble_barrel","cow_barrel","shotgun_barrel","chain_barrel","sword_barrel","lego_barrel","golden_barrel"
         self.posiadane_gadzety = [] #"sand_bag","rocket_luncher","sound_wave","battery","medkit"
-        self.posiadane_karty = ["9","2","3"]
+        self.posiadane_karty = []
         self.aktualna_bron = "railgun_barrel" #jaka jest aktualna bron zalozona przez gracza
         self.aktualny_gadzet = "" #jaki jest aktualny gadzet zalozony przez gracza
         self.animacja = 0 #0 to koniec/brak animacji 16 to poczatek
@@ -1121,7 +1120,7 @@ def strzal(poczatekx,poczateky,kierunek,nazwa):
                     case 0:
                         targets.append([poczatekx,poczateky-i-1])
                         targets.append([poczatekx+1,poczateky-i-1])
-                        targets.append([poczatekx-2,poczateky-i-1])
+                        targets.append([poczatekx-1,poczateky-i-1])
                     case 1:
                         targets.append([poczatekx+i+1,poczateky])
                         targets.append([poczatekx+i+1,poczateky+1])
